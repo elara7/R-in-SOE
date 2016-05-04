@@ -1,0 +1,5 @@
+install.packages("miniUI")
+install.packages("date.table")
+install.packages("shiny")
+install.packages("taskscheduleR")
+Devtools::install_github("jwijffels/taskscheduleR")
