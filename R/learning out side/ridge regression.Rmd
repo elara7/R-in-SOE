@@ -70,9 +70,9 @@ $$
 ## 估计自由度-信息准则
 对于$\hat{y}=Hy$，那么tr(H)=p 自由度    
 那么
-$$H_ridge =(X^{T}X+\lambda I)^{-1}X^{T}$$       
-所以自由度为tr($H_ridge$)       
-可以证明自由度$$df_ridge = \sum \frac{\lambda_i}{\lambda_i+\lambda}$$   
+$$H_{ridge} =(X^{T}X+\lambda I)^{-1}X^{T}$$       
+所以自由度为tr($H_{ridge}$)       
+可以证明自由度$$df_{ridge} = \sum \frac{\lambda_i}{\lambda_i+\lambda}$$   
 其中$\lambda_i$ 是$X^{T}X$ 的特征值
 
 重点：df对$\lambda$ 递减，df=p的时候$\lambda$=0，df=0的时候$\lambda$ 正无穷
