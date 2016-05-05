@@ -1,0 +1,98 @@
+---
+title: "Ridge Regression"
+author: "Elara"
+date: "2016年5月5日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#算法
+最小化$$\sum_i (y_i-x_i^{T}\beta)^{2}+\lambda \sum_{j=1}^{p} \beta_j^{2}$$
+解为$$\hat{\beta}=(X^{T}X+\lambda I)^{-1}X^{T}y$$
+\lambda 接近0，解和OLS一样
+\lambda 接近无穷大，解接近0
+如果是正交（orthonormal design matrix）相当于
+$$
+\hat{\beta}_{J}^{ridge}=\frac{\hat{\beta}_{J}^{OLS}}{1+\lambda}
+$$
+岭回归的作用是***shrinkage*** 收缩
+估计量有偏但是极大减小了估计量方差
+
+# 代码
+```{r}
+library("MASS")
+library("ggplot2")
+#生成具有相关性的3组数据模拟多重共线性
+x1 <- rnorm(20)
+x2 <- rnorm(20,mean=x1,sd=.01)
+y <- rnorm(20,mean=3+x1+x2)
+#普通LM回归的OLS系数
+lm(y~x1+x2)$coef
+#岭回归,$\lambda$ =1
+lm.ridge(y~x1+x2,lambda=1)
+#岭回归,$\lambda$ =0到50并求GCV准则与$\lambda$关系图像
+lambda <- seq(0,50,by=0.1)
+fit <- lm.ridge(y~x1+x2, lambda=seq(0,50,by=0.1))
+m <- data.frame(lambda,fit$GCV) 
+p <- ggplot(data=m,aes(x=lambda,y=fit.GCV)) 
+p+geom_point()
+```     
+
+OLS回归结果不一定存在，如果X不是满秩，$X^{T}X$ 不可逆，没有OLS的唯一解  
+在岭回归中这个问题不存在,因为有个推论$X^{T}X+\lambda I$ 总是可逆（不论X是什么矩阵），所以岭回归的解总是唯一的
+
+# 方差与偏差
+岭回归的估计量的方差    
+$$Var(\hat{\beta})=\sigma ^{2}WX^{T}XW$$ ,
+其中
+$$W=(X^{T}X+\lambda I)^{-1}$$
+
+岭回归的估计连的偏差
+$$Bias(\hat{\beta})=-\lambda W\beta$$
+
+可以证明总方差$\sum_j Var(\hat{\beta}_{j})$ 是一个对$\lambda$ 单调递减的序列  
+总偏差$\sum_j Bias^{2}(\hat{\beta})$ 是一个对$\lambda$ 单调递增的序列
+
+永远存在一个$\lambda$ 使得$\hat{\beta}_{J}^{ridge}$ 的MSE比 $\hat{\beta}_{J}^{OLS}$ 的小
+
+一个激进的结论：就算我们的模型是完全正确并且服从我们设定的分布，我们仍然可以总是通过shrinking towards zero来获得一个更好的估计量（MSE更小）
+
+# 贝叶斯结论
+如果$\beta ~N(0,\tau^{2}I)$ 那么$\beta$ 的后验均值（posterior mean）是
+$$
+(X^{T}X+\frac{\sigma^{2}}{\tau^{2}} I)^{-1}X^{T}y
+$$
+
+# $\lambda$ 的选择
+## 估计自由度-信息准则
+对于$\hat{y}=Hy$，那么tr(H)=p 自由度    
+那么
+$$H_ridge =(X^{T}X+\lambda I)^{-1}X^{T}$$       
+所以自由度为tr($H_ridge$)       
+可以证明自由度$$df_ridge = \sum \frac{\lambda_i}{\lambda_i+\lambda}$$   
+其中$\lambda_i$ 是$X^{T}X$ 的特征值
+
+重点：df对$\lambda$ 递减，df=p的时候$\lambda$=0，df=0的时候$\lambda$ 正无穷
+
+# 自由度选择-交叉验证（cross-validation）
+AIC=nlog(RSS)+2df       
+BIC=nlog(RSS)+dflog(n)
+
+重复拟合-会过度 
+增加数据集用来训练不现实        
+分离数据集作为训练和验证集数据量不够
+
+交叉验证：把数据分成K份，用K-1份做fit，最后一份用来评估    
+对所有数据都重复操作，用平均评估做结果  
+如果选择分成n份--leave-one-out corss-validation 
+
+GVC，AIC BIC准则
+
+
+
+
+
+
