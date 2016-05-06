@@ -294,6 +294,7 @@ dummy variable 的取值是0和1
 - parallel regression：2个方程仅截距项不同      
 - concurrent regression：2个方程仅斜率不同      
 - dissimilar regression：2个方程斜率和截距项都不同         
+![](C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\1.png)      
 
 如果只有一个虚拟变量就直接加入方程回归          
 有多个状态（lebvel）的时候要建立多个虚拟变量            
@@ -365,7 +366,6 @@ summary(lm.wage2)
 fema<-female*married
 lm.wage3<-lm(lwage~female+married+fema+educ+exper+tenure+expersq+tenursq)
 summary(lm.wage3)
-#画图？
 detach(wage1)
 ```
 
@@ -385,13 +385,37 @@ con_China<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\cons
 #View(con_China)
 names(con_China)<-c("year","con","GDP")
 attach(con_China)
+library("ggplot2")
+#分离数据
 con1<-con[year<=1991]
 con2<-con[year>1991]
 GDP1<-GDP[year<=1991]
 GDP2<-GDP[year>1991]
-dat1<-cbind(GDP1,con1)
-dat2<-cbind(GDP2,con2)
-chow(dat1,dat2)
+#标准化
+zGDP1=scale(GDP1, center=TRUE, scale=TRUE)[1:14,1]
+zcon1=scale(con1, center=TRUE, scale=TRUE)[1:14,1]
+zGDP2=scale(GDP2, center=TRUE, scale=TRUE)[1:15,1]
+zcon2=scale(con2, center=TRUE, scale=TRUE)[1:15,1]
+#合并
+n1 <- length(GDP1)
+n2 <- length(GDP2)
+y1=rep(0,n1)
+y2=rep(1,n2)
+dat11<-cbind(zGDP1,zcon1,y1)
+dat12<-cbind(zGDP2,zcon2,y2)
+data1 <- rbind(dat11,dat12)
+data1 <- as.data.frame(data1)
+names(data1) <- c("GDP","con","year")
+#因子化
+data1$year <- factor(data1$year,labels =c("before 1991","after 1991"))
+#绘图
+p <- ggplot(data = data1,aes(x=data1$con,y=data1$GDP))
+p+geom_point(aes(color=data1$year))+stat_smooth(aes(color=data1$year))
+#chow检验
+dat1<-cbind(GDP1,con1) 
+dat2<-cbind(GDP2,con2) 
+chow(dat1,dat2) 
+detach(con_China) 
 #P值很小，拒绝经济结构没有发生改变的原假设
 ```
 
