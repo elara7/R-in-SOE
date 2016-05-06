@@ -287,4 +287,163 @@ linearHypothesis(fit, "hp - wt= 0")#hp和wt相等
 F检验的f值，总是对应假设中T检验t值的平方（要在相同原假设下采用正确形式）
 
 
+## 虚拟变量（Dummy）
+例如：是否要加入异常值、季节调整、经济结构改变  
+有三种  
+![]("C:\Users\44180\Documents\R-in-SOE\R\R-class\c9\1.PNG")
+3个level只要2个虚拟变量，加了3个会有完全共线性      
+第三类叫基准类（不含b1b2）
+
+```{r}
+#导入消费数据
+con_China<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\consumption_China.csv")
+names(con_China)<-c("year","c","y")
+names(con_China)
+#判别
+Dummy<-con_China$year>=1992
+Dummy
+#改变成01
+Dummy<-as.numeric(Dummy)
+Dummy
+#导入工资数据
+wage1<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\wage1.csv",header=T)
+head(wage1)
+#回归0.结果带星号显著
+lm.wage<-lm(lwage~ female+educ+exper+expersq+tenure+tenursq,data=wage1)
+summary(lm.wage)
+#生成4个虚拟变量，结婚|男女
+attach(wage1)
+marrmale<-as.numeric(married==1 & female==0)
+marrfemale<-as.numeric(married==1 & female==1)
+singmale<-as.numeric(married==0 & female==0)
+singfem<-as.numeric(married==0 & female==1)
+#只放3个虚拟变量进入回归1
+lm.wage1<-lm(lwage~marrmale+marrfemale+singfem+educ+exper+tenure+expersq+tenursq)
+summary(lm.wage1)
+#放入全部4个level，最后一个加入的虚拟变量系统默认全为NA无法计算（因为完全多重共线性）
+lm.wage2<-lm(lwage~marrmale+marrfemale+singfem+educ+exper+tenure+expersq+tenursq+singmale)
+summary(lm.wage2)
+#基准类 单身男性，已婚男性的截距为系数0.2126+截距项0.32
+fema<-female*married
+lm.wage3<-lm(lwage~female+married+fema+educ+exper+tenure+expersq+tenursq)
+summary(lm.wage3)
+#画图？
+detach(wage1)
+```
+
+## chow test
+![]("C:\Users\44180\Documents\R-in-SOE\R\R-class\c9\2.PNG")
+原假设：没有结构变化
+```{r}
+source("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\Chow_test.R")
+con_China<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\consumption_China.csv")
+#View(con_China)
+names(con_China)<-c("year","con","GDP")
+attach(con_China)
+con1<-con[year<=1991]
+con2<-con[year>1991]
+GDP1<-GDP[year<=1991]
+GDP2<-GDP[year>1991]
+dat1<-cbind(GDP1,con1)
+dat2<-cbind(GDP2,con2)
+chow(dat1,dat2)
+#P值很小，拒绝经济结构没有发生改变的原假设
+```
+
+## 正态性检验
+数据量大的时候$\alpha$ 最好定小一些     
+大数据量：120以上，这个时候其实基本上渐进正态了，此时$\alpha$ 定1%比较好
+
+### Shapiro-Wilk normality test
+```{r}
+# Shapiro-Wilk normality test
+y <- rnorm(5000)
+shapiro.test(y)
+qqnorm(y)
+qqline(y,lty=2)
+
+shapiro.test(runif(100,min=2,max=4))
+```
+
+### QQ图，密度图像比较
+
+```{r}
+# QQ图，密度图像比较
+library(car)
+fit <- lm(weight ~ height, data=women)
+residplot <- function(fit, nbreaks=10) {
+z <- rstudent(fit)
+hist(z, breaks=nbreaks, freq=FALSE,
+xlab="Studentized Residual",
+main="Distribution of Errors")
+rug(jitter(z), col="brown")
+curve(dnorm(x, mean=mean(z), sd=sd(z)),
+add=TRUE, col="blue", lwd=2)
+lines(density(z)$x, density(z)$y,
+col="red", lwd=2, lty=2)
+legend("topright",
+legend = c( "Normal Curve", "Kernel Density Curve"),
+lty=1:2, col=c("blue","red"), cex=.7) }
+par(mfrow=c(1,2))
+qqPlot(fit,labels=row.names(women),id.method="identify", simulate=TRUE, main="Q-Q Plot")
+residplot(fit)
+```
+
+### Jarque–Bera (JB) Test of Normality
+![]("C:\Users\44180\Documents\R-in-SOE\R\R-class\c9\3.PNG")
+
+```{r}
+library("ccgarch")
+jb.test(fit$residuals)
+```
+
+## 非线性回归
+### 对数回归p38
+总共有  
+1. 线性-线性模型
+2. log-log模型，两边都是对数。系数表示x变化1%，y变化的百分比
+3. log-线性模型，系数表示x变化1，y变化的百分比
+4. 线性-log模型，系数表示x变化1%，y变化0.01xbeta
+
+### 例子p40
+```{r}
+cl<-data.frame(
+X=c(rep(2*4:21, c(2, 4, 4, 3, 3, 2, 3, 3, 3, 3, 2,
+3, 2, 1, 2, 2, 1, 1))),
+Y=c(0.49, 0.49, 0.48, 0.47, 0.48, 0.47, 0.46, 0.46,
+0.45, 0.43, 0.45, 0.43, 0.43, 0.44, 0.43, 0.43,
+0.46, 0.45, 0.42, 0.42, 0.43, 0.41, 0.41, 0.40,
+0.42, 0.40, 0.40, 0.41, 0.40, 0.41, 0.41, 0.40,
+0.40, 0.40, 0.38, 0.41, 0.40, 0.40, 0.41, 0.38,
+0.40, 0.40, 0.39, 0.39)
+)
+#nonlinear regression
+nls.sol<-nls(Y~a+(0.49-a)*exp(-b*(X-8)), data=cl,
+start = list( a= 0.1, b = 0.01 ))
+nls.sum<-summary(nls.sol); nls.sum
+#plot the fitted line and scatter plot
+xfit<-seq(8,44,len=200)
+yfit<-predict(nls.sol, data.frame(X=xfit))
+plot(cl$X, cl$Y)
+lines(xfit,yfit)
+```
+        
+# subset selection（模型选择）
+## 多重共线性
+### 问题
+x1和x2相关0.8-0.9 高度共线性，x1和x2完全线性关系：完全共线性    
+理论p42 
+方差增大，导致系数的检验T减少，难以进入拒绝域，变得容易得到接受原假设的结果
+### 检验
+加入或者去掉，看其他系数是否有明显变化（特别是正负变化）
+单个变量VIF,大于10或者平均vif大于2 有共线性，
+特征值检验      
+condition number        
+## 解决方法
+- 改变模型结构    
+- 剔除有关变量（基本上不可行）
+- 面板数据        
+- 逐步回归        
+- 岭回归  
+
 
