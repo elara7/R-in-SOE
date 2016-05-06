@@ -456,14 +456,30 @@ jb.test(fit$residuals)
 ```
 
 ## 非线性回归
-### 对数回归p38
+### 可对数转换
 总共有  
 1. 线性-线性模型
-2. log-log模型，两边都是对数。系数表示x变化1%，y变化的百分比
+2. log-log模型，两边都是对数。系数表示x变化1%，y变化的百分比(弹性)
+```{r}
+cobb<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\Cobb.csv",header=T)
+cobb
+lny<-log(cobb$Y)
+lnX2<-log(cobb$X2)
+lnX3<-log(cobb$X3)
+summary(lm(lny~lnX2+lnX3))
+```
+
+we see that in the Taiwanese agricultural sector for the period 1958–1968 the output elasticities of labor and
+capital were 0.07285 and 1.07430, respectively. In other words, over the period of study, holding the capital
+input constant, a 1 percent increase in the labor input led on the average to about a 0.07 percent increase in
+the output. Similarly, holding the labor input constant, a 1 percent increase in the capital input led on the
+average to about a 1.07 percent increase in the output. Adding the two output elasticities, we obtain 1.14,
+which gives the value of the returns to scale parameter.        
+
 3. log-线性模型，系数表示x变化1，y变化的百分比
 4. 线性-log模型，系数表示x变化1%，y变化0.01xbeta
 
-### 例子p40
+### 不可对数转换
 ```{r}
 cl<-data.frame(
 X=c(rep(2*4:21, c(2, 4, 4, 3, 3, 2, 3, 3, 3, 3, 2,
