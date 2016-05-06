@@ -3,13 +3,13 @@ title: "Regression"
 author: "Elara"
 date: "2016年5月4日"
 output:
-  pdf_document: 
-      latex_engine: xelatex
-      includes:
-            in_header: header.tex
   html_document:
     number_sections: yes
     theme: cerulean
+  pdf_document:
+    includes:
+      in_header: header.tex
+    latex_engine: xelatex
   word_document: default
 ---
 ```{r setup, include=FALSE}
@@ -180,7 +180,7 @@ install.packages(maxLik)
 
 ```{r}
 library("maxLik")
-indfood<-read.csv(file="C:\\Users\\44180\\Documents\\sourcetree\\elara7\\soe\\Rmarkdown\\Chap_9\\Indfood.csv")
+indfood<-read.csv(file="C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\Indfood.csv")
 #抽取数据
 foodexp<-indfood[,1]
 totalexp<-indfood[,2]
@@ -288,27 +288,65 @@ F检验的f值，总是对应假设中T检验t值的平方（要在相同原假�
 
 
 ## 虚拟变量（Dummy）
-例如：是否要加入异常值、季节调整、经济结构改变  
-有三种  
-![]("C:\Users\44180\Documents\R-in-SOE\R\R-class\c9\1.PNG")
-3个level只要2个虚拟变量，加了3个会有完全共线性      
-第三类叫基准类（不含b1b2）
+例如：是否要加入异常值、季节调整、经济结构改变（名义变量）            
+dummy variable 的取值是0和1             
+- coincident regression ：2个方程截距和斜率都相等       
+- parallel regression：2个方程仅截距项不同      
+- concurrent regression：2个方程仅斜率不同      
+- dissimilar regression：2个方程斜率和截距项都不同         
+
+如果只有一个虚拟变量就直接加入方程回归          
+有多个状态（lebvel）的时候要建立多个虚拟变量            
+例如3个状态（is Asian？）（is Caucasian？）（is African Americ？）      
+需要2个随机变量         
+$$
+D_{i1} = \left\{
+\begin{array}{ll}
+1 & \textrm{if ith person is Asian}\\
+0 & \textrm{if ith person is not Asian}\\
+\end{array} 
+\right.
+$$         
+and     
+$$
+D_{i2} = \left\{
+\begin{array}{ll}
+1 & \textrm{if ith person is Caucasian}\\
+0 & \textrm{if ith person is not Caucasian}\\
+\end{array} 
+\right.
+$$              
+回归模型为：    
+$$
+y_i=\beta_0+\beta_1D_{i1}+\beta_2D_{i2}+\epsilon_i=
+\left\{ 
+\begin{array}{ll}
+\beta_0+\beta_1+\epsilon_i & \textrm{if ith person is Asian} \\
+\beta_0+\beta_2+\epsilon_i & \textrm{if ith person is Caucasian} \\
+\beta_0+\epsilon_i & \textrm{if ith person is African Americ} \\
+\end{array} 
+\right.
+$$       
+此时$\beta_0$ 是African Americ的基准水平，$\beta_1$ 是Asian和African Americ之间基准水平的差距，$\beta_2$ 是Caucasian和African            Americ之间基准水平的差距                        
+其中African Americ叫基准类（baseline：不含$\beta_1$ 和$\beta_2$）               
+3个level只要2个虚拟变量，加了3个会有完全共线性                  
+
 
 ```{r}
 #导入消费数据
 con_China<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\consumption_China.csv")
 names(con_China)<-c("year","c","y")
 names(con_China)
-#判别
+#判别>=1992为true，小于的false
 Dummy<-con_China$year>=1992
 Dummy
-#改变成01
+#改变成0-1
 Dummy<-as.numeric(Dummy)
 Dummy
 #导入工资数据
 wage1<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\wage1.csv",header=T)
 head(wage1)
-#回归0.结果带星号显著
+#回归0。结果带星号显著
 lm.wage<-lm(lwage~ female+educ+exper+expersq+tenure+tenursq,data=wage1)
 summary(lm.wage)
 #生成4个虚拟变量，结婚|男女
@@ -323,7 +361,7 @@ summary(lm.wage1)
 #放入全部4个level，最后一个加入的虚拟变量系统默认全为NA无法计算（因为完全多重共线性）
 lm.wage2<-lm(lwage~marrmale+marrfemale+singfem+educ+exper+tenure+expersq+tenursq+singmale)
 summary(lm.wage2)
-#基准类 单身男性，已婚男性的截距为系数0.2126+截距项0.32
+#baseline:单身男性，则已婚男性的截距为系数married 0.2126756+截距项0.3213780
 fema<-female*married
 lm.wage3<-lm(lwage~female+married+fema+educ+exper+tenure+expersq+tenursq)
 summary(lm.wage3)
@@ -332,8 +370,15 @@ detach(wage1)
 ```
 
 ## chow test
-![]("C:\Users\44180\Documents\R-in-SOE\R\R-class\c9\2.PNG")
-原假设：没有结构变化
+检验2个不同数据集的线性回归模型中的系数是否equal(相当于是否存在结构变化)                   
+原假设:不存在结构变化                   
+1. 用$n=n_1+n_2$总样本进行回归,得到within group sum of squares   :$S_1$,自由度为$n_1+n_2-k$,看是参数个数(包括截距项)                    
+2. 在$n_1$和$n_2$ 2个分样本进行回归得到2个回归方程和2个within group sums of square $S_2+S_3$,自由度$n_1+n_2-2k$                 
+3. 
+$$
+F_{k,n_1+n_2-2k} = \frac{[S_1-(S_2+S_3)]/k}{[(S_2+S_3)/(n_1+n_2-2k)]}
+$$                   
+
 ```{r}
 source("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\Chow_test.R")
 con_China<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\consumption_China.csv")
@@ -351,24 +396,31 @@ chow(dat1,dat2)
 ```
 
 ## 正态性检验
-数据量大的时候$\alpha$ 最好定小一些     
+tips:数据量大的时候$\alpha$ 最好定小一些     
 大数据量：120以上，这个时候其实基本上渐进正态了，此时$\alpha$ 定1%比较好
 
-### Shapiro-Wilk normality test
+
+### QQ图,Shapiro-Wilk normality test
+quantile-quantile plot:比较排序过的样本数据(纵轴)和排序过的正态数据(横轴),如果满足正态性那么样本数据应该在45°线(qq线)附近
+Shapiro-Wilk normality test:原假设为满足正态性
 ```{r}
 # Shapiro-Wilk normality test
 y <- rnorm(5000)
+#Shapiro-Wilk normality test:p很大,无法拒绝原假设
 shapiro.test(y)
+#QQ图
 qqnorm(y)
+#QQ线
 qqline(y,lty=2)
-
+#Shapiro-Wilk normality test:p很小,拒绝原假设
 shapiro.test(runif(100,min=2,max=4))
 ```
 
-### QQ图，密度图像比较
-
+### 正态性检验函数:residplot(自编) car::qqplot 
+residplot():画出拟合模型的studentized residual密度函数(红虚线)与密度直方图(默认nbreaks=10),并画出正态密度函数(蓝实线)用来对比   
+qqplot():横轴:排序后的t分布生成数,纵轴:样本studentized residuals,并给出置信区间
 ```{r}
-# QQ图，密度图像比较
+# qqplot residplot
 library(car)
 fit <- lm(weight ~ height, data=women)
 residplot <- function(fit, nbreaks=10) {
@@ -390,7 +442,13 @@ residplot(fit)
 ```
 
 ### Jarque–Bera (JB) Test of Normality
-![]("C:\Users\44180\Documents\R-in-SOE\R\R-class\c9\3.PNG")
+- 渐近大样本检验
+- 基于OLS residual
+- S:skewness of OLS residuals,K:kurtosis of OLS residuals,n:样本容量
+- $$JB=n[\frac{S^{2}}{6}+\frac{(K-3)^{2}}{24}]$$        
+- 正态分布的S=0,K=3,JB检验相当于对联合假设:S=0,K=3进行检验
+- 原假设:residuals服从正态分布,此时JB期望为0
+- 原假设下JB统计量渐近服从卡方分布(2自由度)
 
 ```{r}
 library("ccgarch")
