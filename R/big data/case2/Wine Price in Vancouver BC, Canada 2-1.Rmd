@@ -12,13 +12,19 @@ knitr::opts_chunk$set(echo = TRUE)
 TOTAL WEEKLY SALES OF IMPORT AND DOMESTIC NON VQA RED & WHITE TABLE WINE 
 WITHIN MUNICIPALITY OF VANCOUVER IN UNITS AND LITRES
 FROM WEEK ENDING APRIL 4, 2009 TO WEEK ENDING MAY 28, 2011
-Using readxl package to read Excel spreadsheet: read_excel
+
+# 数据读取
+
+Using readxl package to read Excel spreadsheet: read_excel      
+
 ```{r}
 setwd("~/R-in-SOE/R/big data")
 # install.packages("readxl")
+library(ggplot2)
 library(readxl) 
 # wine<-read_excel("C:/Course16/EC510/data/Vancouver_Non_VQA_Sls_Apr1toMay31_rev.xlsx",na="NA",skip=5)
-# wine<-read_excel("C:\\Users\\44180\\Documents\\Surface-workandstudy\\soe\\bigdata\\Vancouver_Non_VQA_Sls_Apr1toMay31.xlsx")
+# wine<-read_excel("C:\\Users\\44180\\Documents\\Surface-workandstudy\\soe\\bigdata\\Vancouver_Non_VQA_Sls_Apr1toMay31.xlsx",skip=4,na = "NA")
+# wine<-read_excel("D:\\PC-workandstudy\\soe\\bigdata\\Vancouver_Non_VQA_Sls_Apr1toMay31.xlsx",skip=4,na = "NA")
 library(readr) 
 # download.file("http://web.pdx.edu/~crkl/WISE2016/data/Vancouver_Non_VQA_Sls_Apr1toMay31.csv","Vancouver_Non_VQA_Sls_Apr1toMay31.csv",mode="wb")
 # wine<-read_csv("http://web.pdx.edu/~crkl/WISE2016/data/Vancouver_Non_VQA_Sls_Apr1toMay31.csv",na="NA")
@@ -29,14 +35,23 @@ dim(wine)
 #变量名
 names(wine)
 summary(wine)
+```
+
+#数据整理
+
+```{r}
 #新建因子变量what,存放红酒还是白酒
 wine$what<-factor(wine$`Store Category Minor Name`)   
 #新建因子变量where,存放酒的来源
 wine$where<-factor(wine$`Store Category Sub Name`)    
 #新建变量quantity,存放每周总销量
 wine$quantity<-wine$`Total Weekly Selling Unit`
+```
 
-# price analysis价格分析
+#价格分析
+
+```{r}
+# price analysis
 wine$price<-wine$`Current Display Price`
 #分组
 wine$price_level<-cut(wine$price,breaks=c(-Inf,50,100,1000,Inf),labels=c("Low","Medium","High","Expensive"))
@@ -52,28 +67,43 @@ barplot(t2)
 with(wine,boxplot(price~price_level))
 #价格频数分布
 with(wine,hist(price))
+```
 
+#缩小数据
+```{r}
 # reduce dataset to consider only the case of price<=100只考虑100块以下的酒
 varsel<-c("what","where","quantity","price","price_level")
-wine100<-subset(wine,price<100 & quantity>0,varsel) # not including returns
+#只取出varsel数据
+wine100<-subset(wine,price<100 & quantity>0,varsel) 
+names(wine100)
+#删除变量wine
 rm(wine)
-
+#价格低于100的数据中
+#价格频率直方图
 with(wine100,hist(price))
+#价格频数直方图
 with(wine100,hist(price,freq=F))
+#直方图+密度曲线
 with(wine100,lines(density(price),col="blue"))
+```
 
+#需求分析
+
+```{r}
 # demand analysis
+#销量和价格回归
 model1<-lm(quantity~price,data=wine100)
 summary(model1)
-
-with(wine100,
-     plot(price,quantity,col="lightblue",xlab="Price",ylab="Quantity",main="Weekly Sales of Table Wine in Vancouver BC"))
+#散点图非线性
+qplot(x=wine100$price,y=(model1$residuals)^2)
+with(wine100,plot(price,quantity,col="lightblue",xlab="Price",ylab="Quantity",main="Weekly Sales of Table Wine in Vancouver BC"))
 abline(model1,col="darkblue")
 
-# log-model could perform better
+# log-model could perform better log后效果更好
 model2<-lm(log(quantity)~log(price),data=wine100)
 summary(model2)
 
-with(wine100,
-     plot(log(price),log(quantity),col="lightgreen",xlab="log(Price)",ylab="log(Quantity)",main="Weekly Sales of Table Wine in Vancouver BC"))
+with(wine100,plot(log(price),log(quantity),col="lightgreen",xlab="log(Price)",ylab="log(Quantity)",main="Weekly Sales of Table Wine in Vancouver BC"))
 abline(model2,col="darkgreen")
+```
+

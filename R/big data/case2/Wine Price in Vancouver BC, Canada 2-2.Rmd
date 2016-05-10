@@ -1,0 +1,149 @@
+---
+title: "Wine Price in Vancouver BC, Canada 2-2"
+author: "Wang ZeXian"
+date: "2016年5月10日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+TOTAL WEEKLY SALES OF IMPORT AND DOMESTIC NON VQA RED & WHITE TABLE WINE 
+WITHIN MUNICIPALITY OF VANCOUVER IN UNITS AND LITRES
+FROM WEEK ENDING APRIL 4, 2009 TO WEEK ENDING MAY 28, 2011
+Using readxl package to read Excel spreadsheet: read_excel
+Using qplot() of ggplot2 package for data visualization
+#导入数据
+```{r}
+# install.packages("ggplot2")
+# install.packages("readxl")
+# library(readxl) 
+# wine<-read_excel("C:/Course16/EC510/data/Vancouver_Non_VQA_Sls_Apr1toMay31_rev.xlsx",na="NA",skip=5)
+# wine<-read_excel("C:/Course16/EC510/data/Vancouver_Non_VQA_Sls_Apr1toMay31.xlsx",sheet=2)
+library(readr) 
+# wine<-read_csv("http://web.pdx.edu/~crkl/WISE2016/data/Vancouver_Non_VQA_Sls_Apr1toMay31.csv",na="NA")
+load("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case2\\wine.RData")
+dim(wine)
+names(wine)
+summary(wine)
+```
+
+#数据整理
+```{r}
+#产地
+where<-wine$`Store Category Sub Name` 
+#substr(where,1,6).提取每一个字符串的前6个字母
+head(where)
+head(substr(where,1,6))
+#数据中同一个国家有不同产地
+where[226]
+where[876]
+#合并法国的产地都为FRANCE
+where<-ifelse(substr(where,1,6)=="FRANCE","FRANCE",where)  
+#合并德国的产地都为GERMANY
+where<-ifelse(substr(where,1,7)=="GERMANY","GERMANY",where) 
+big5<-c("AUSTRALIA","UNITED STATES","FRANCE","ITALY","OTHERS")
+#is.element(where,big5) 返回where中元素是否是big5中的元素
+head(is.element(where,big5))
+#不是big5的就用OTHERS替代
+where5<-ifelse(!is.element(where,big5),"OTHERS",where)
+head(where5,100)
+#加入where5作为新的因子
+wine$where<-factor(where5)
+#酒名
+wine$what<-factor(wine$`Store Category Minor Name`)   # Red or White
+#销量
+wine$quantity<-wine$`Total Weekly Selling Unit`
+```
+
+#价格分析
+
+```{r}
+# price analysis
+wine$price<-wine$`Current Display Price`
+wine$price_level<-cut(wine$price,breaks=c(-Inf,50,100,1000,Inf),labels=c("Low","Medium","High","Expensive"))
+#与Wine Price in Vancouver BC, Canada 2-1对比,此处简化
+t1<-with(wine,table(where,price_level))
+t1
+barplot(t1)
+
+t2<-with(wine,table(what,price_level))
+t2
+barplot(t2)
+
+library(ggplot2)
+#每种价格水平的具体价格箱线图
+qplot(x=price_level,y=price,geom="boxplot",data=wine)
+#分组散点图
+qplot(x=price_level,y=price,geom="jitter",data=wine)
+qplot(x=price_level,y=price,geom="point",data=wine)
+#价格直方图
+qplot(price,geom="histogram",data=wine)
+summary(wine$price)
+```
+
+#缩小数据
+
+```{r}
+# reduce dataset to consider only the case of price<=100
+varsel<-c("what","where","quantity","price","price_level")  
+wine100<-subset(wine,price<100 & quantity>0,varsel) 
+rm(wine)
+```
+
+#图像
+
+```{r}
+qplot(x=where,y=price,geom="boxplot",data=wine100)
+qplot(x=what,y=price,geom="jitter",data=wine100)
+#频数直方图
+qplot(price,data=wine100) 
+#频数折线图
+qplot(price,geom="freqpoly",data=wine100)
+#密度图(频率折线图)
+qplot(price,geom="density",color=I("blue"),data=wine100)
+#分组填色直方图$密度图
+qplot(price,geom="histogram",fill=what,data=wine100)
+qplot(price,geom="histogram",fill=where,data=wine100)
+qplot(price,geom="density",fill=where,data=wine100)
+
+# Using Facets谱图
+qplot(price,geom="bar",fill=what,data=wine100)
+qplot(price,geom="bar",data=wine100) + facet_grid(what ~ .)
+qplot(price,geom="bar",data=wine100) + facet_grid(. ~ what)
+qplot(price,geom="bar",data=wine100) + facet_grid(where ~ .)
+qplot(price,geom="bar",data=wine100) + facet_grid(. ~ where)
+```
+
+#需求分析
+
+```{r}
+# demand analysis
+model1<-lm(quantity~price,data=wine100)
+summary(model1)
+#散点图,透明度1/3
+qplot(price,quantity,data=wine100,alpha=I(1/3))
+qplot(price,quantity,data=wine100,alpha=I(1/3),col=what)
+qplot(price,quantity,data=wine100,alpha=I(1/3),col=where)
+#qplot(price,quantity,data=wine100,alpha=I(1/3),col=where,geom=c("point","smooth"),method="lm")
+qplot(price,quantity,data=wine100,alpha=I(1/3),col=where,geom=c("point"))+stat_smooth(method="lm")
+qplot(price,quantity,data=wine100,alpha=I(1/3),col=where,geom=c("point"))+stat_smooth(method="lm",color="darkblue")+facet_grid(where ~ .)
+# log-model could perform better
+model2<-lm(log(quantity)~log(price),data=wine100)
+summary(model2)
+#log="xy",x和y都做对数变化
+qplot(price,quantity,data=wine100,alpha=I(1/3),log="xy")
+qplot(price,quantity,data=wine100,alpha=I(1/3),col=what,log="xy")
+qplot(price,quantity,data=wine100,alpha=I(1/3),col=where,log="xy")
+#qplot(price,quantity,data=wine100,alpha=I(1/3),geom=c("point","smooth"),method="lm",log="xy")
+qplot(price,quantity,data=wine100,alpha=I(1/3),geom=c("point"),log="xy")+stat_smooth(method="lm")
+#qplot(price,quantity,data=wine100,alpha=I(1/3),col=what,geom=c("point","smooth"),method="lm",log="xy")
+qplot(price,quantity,data=wine100,alpha=I(1/3),col=what,geom=c("point"),log="xy")+stat_smooth(method="lm")
+#qplot(price,quantity,data=wine100,alpha=I(1/3),geom=c("point","smooth"),method="lm",log="xy") + facet_grid(what ~ .)
+qplot(price,quantity,data=wine100,alpha=I(1/3),geom=c("point"),log="xy") + facet_grid(what ~ .)+stat_smooth(method="lm")
+#qplot(price,quantity,data=wine100,alpha=I(1/3),geom=c("point","smooth"),method="lm",log="xy") + facet_grid(where ~ .)
+qplot(price,quantity,data=wine100,alpha=I(1/3),geom=c("point"),log="xy") + facet_grid(where ~ .)+stat_smooth(method="lm")
+
+
+# xlim, ylim, xlab, ylab, main may be used as in basic plot
