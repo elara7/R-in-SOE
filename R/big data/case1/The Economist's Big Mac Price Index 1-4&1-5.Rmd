@@ -1,0 +1,156 @@
+---
+title: "The Economist's Big Mac Price Index 1-4&1-5"
+author: "Elara"
+date: "2016年5月8日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Visualization using ggplot2, part 1
+Need data on local_price, dollar_ex (others can be computed)
+Using readxl package to read Excel spreadsheet
+```{r}
+# install.packages("readxl")
+setwd("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case1\\")
+library(readxl)
+args(read_excel)
+# the following data file has been modified to include gdp_per_capita and Country=id
+# download.file("http://web.pdx.edu/~crkl/WISE2016/data/BMfile2000-2016.xls","bm2016.xls",mode="wb")
+bm201601<-read_excel("bm2016.xls",sheet=1)
+names(bm201601)
+dim(bm201601)
+# dollar_price=local_price/dollar_ex
+# dollar_ppp=local_price/local_price["United States"]
+# dollar valuation=100*(dollar_ppp-dollar_ex)/dollar_ex
+# (-% undervaluation, +% overvaluation)
+
+# sort data according to the size of dollar_valuation
+# bm201601s<-bm201601[order(bm201601$dollar_valuation),]
+
+# gdp in US$1000
+bm201601$gdp<-bm201601$gdp_per_capita/1000
+# country categories based on per capita gdp levels,根据/1000以后的人均gdp分类，分界线在breaks里,加入gdp_level变量
+bm201601$gdp_level<-cut(bm201601$gdp,breaks=c(-Inf,10,20,50,Inf),labels=c("Low","Middle","High","Rich"))
+bm201601$bmp<-bm201601$dollar_price
+head(bm201601)
+```
+
+```{r}
+library(ggplot2)
+
+# bmp-gdp relationship (Balassa-Samuleson Effect)
+#黑色散点图
+bg1<-ggplot(data=bm201601,aes(x=gdp,y=bmp)) + geom_point()
+bg1
+#按照level分类彩色散点图，点大小3
+bg2<-bg1 + geom_point(aes(col=gdp_level),size=3)
+bg2
+#用lm方法画宽度1拟合线,se=F：不要置信区间
+bg3<-bg2 + geom_smooth(method="lm",se=F,lwd=1)
+bg3
+#加入标题和坐标轴文字
+bg4<-bg3 + ggtitle("Big Mac Price vs. GDP Per Capita, January 2016") +
+  xlab("GDP (US$1000)") + ylab("Price (US$)")
+bg4
+#分面
+bg4 + facet_wrap(~ gdp_level)
+```
+
+```{r}
+# dollar valuation (-% undervaluation, +% overvaluation)
+#美元估价图
+dv1<- ggplot(data=bm201601,aes(x=id,y=dollar_valuation)) + geom_point(aes(col=gdp_level),size=3)
+dv2<- dv1 + geom_hline(yintercept=0)
+dv2
+#xend和yend是每个散点要连接成线的对应点坐标，画出连接坐标轴的垂线
+dv3<- dv2 + geom_segment(aes(x=id,y=dollar_valuation,xend=id,yend=0,col=gdp_level))
+dv3
+dv4<- dv3 + ggtitle("Valuation Against U.S.Dollar, January 2016") +
+  xlab("Country") + ylab("U.S.$ Valuation in %")
+dv4
+#theme（横轴的文本=文本属性（角度=45，横向调整=1.3，纵向调整1.2））
+dv5<- dv4 + theme(axis.text.x= element_text(angle=45, hjust =1.3, vjust = 1.2))
+dv5
+#分面（按照level），wrap写成~gdp_level,grid(x~.)是竖排图，grid(~x)横排图
+dv3+facet_grid(gdp_level~.)
+# supper impose dollar_adj_valuation加入dollar_adj_valuation点，shape2 size2
+dv5 + geom_point(aes(x=id,y=dollar_adj_valuation,col=gdp_level),shape=2,size=2)
+```
+
+```{r}
+# dollar adjust valuation (-% undervaluation, +% overvaluation)
+#同前dv2
+dv1a<- ggplot(data=bm201601,aes(x=id,y=dollar_valuation)) + geom_point(aes(col=gdp_level),size=3)
+dv2a<- dv1a + geom_hline(yintercept=0)
+dv2a
+#加入dollar_adj_valuation
+dv3a<- dv2a + geom_point(aes(x=id,y=dollar_adj_valuation,col=gdp_level),shape=2,size=2)
+dv3a
+#加入连线，从id，dollar_adj_valuation连接到id，dollar_valuation
+dv3b<- dv3a + geom_segment(aes(x=id,y=dollar_valuation,xend=id,yend=dollar_adj_valuation,col=gdp_level))
+dv3b
+dv4a<- dv3b + ggtitle("Valuation Against U.S.Dollar, January 2016") +
+  xlab("Country") + ylab("U.S.$ Valuation in %")
+dv4a
+dv5a<- dv4a + theme(axis.text.x= element_text(angle=45, hjust = 1.3, vjust = 1.2))
+dv5a
+#分面
+dv3a+facet_grid(gdp_level ~ .)
+```
+
+```{r}
+# histogram and density
+#直方图，对dollar_price计数，用level分色填充
+p1<- ggplot(data=bm201601,aes(dollar_price,fill=gdp_level))
+p2<- p1 + geom_histogram(binwidth=1)
+p2
+#分列填充而不是上面的上下填充
+p3<- p1 + geom_histogram(binwidth=1,position="dodge")
+p3
+#密度函数，用level分类填色
+p4<- p1 + geom_density(alpha=0.5) + ggtitle("Big Mac Price, July 2015")
+p4
+#分面
+p4+facet_wrap(~ gdp_level)
+```
+
+# Data Visualization using ggplot2, part 2
+The Economist's Big Mac Price   
+Historical Data from 1986-9-6 to 2015-7-21  
+Cross Sections and Time Series with Gaps
+Unbalanced Panel Data
+Using readxl package to read Excel spreadsheet
+```{r}
+#install.packages("readxl")
+#setwd("C:/Course16/WISE2016/R")
+#load previously saved RData file
+load("bmdatas.RData")
+
+country<-c("United States","Japan","Britain","China","Euro area")
+# country<-c("Japan","Singapore","Taiwan","China","Hong Kong","South Korea")
+# country<-c("Thailand","Malaysia","Indonesia","Philippines","India")
+bmdata<-subset(bmdatas,is.element(id,country))
+```
+
+```{r}
+library(ggplot2)
+
+# big mac price 画线
+p1<-ggplot(bmdata,aes(x=date,y=dollar_price,col=id)) + geom_line(size=1)
+p1
+p2<-p1 + ggtitle("Big Mac Price Time Series") + xlab("Year") + ylab("Price (US$)")
+p2
+#p2 + facet_grid(id ~ .)
+```
+
+```{r}
+# dollar valuation (-% undervaluation, +% overvaluation)
+v1<-ggplot(bmdatas,aes(x=date,y=dollar_valuation,col=id)) + geom_line(size=1)
+v1
+v2<-v1 + ggtitle("Dollar Valuation") + xlab("Year") + ylab("Percent")
+v2
+# v2 + facet_wrap(~ id)
+```

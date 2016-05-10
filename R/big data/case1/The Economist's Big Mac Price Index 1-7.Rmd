@@ -1,0 +1,48 @@
+---
+title: "The Economist's Big Mac Price Index 1-7"
+author: "Elara"
+date: "2016年5月8日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Economist's Big Mac Price 
+Historical Data from 1986-9-6 to 2015-7-21
+Cross Sections and Time Series with Gaps
+Unbalanced Panel Data
+```{r}
+# Using readxl package to read Excel spreadsheet
+# install.packages("readxl")
+setwd("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case1\\")
+# load previously saved RData file
+load("bmdatas.RData")
+# test of equal variance across countries
+bartlett.test(bmdatas$dollar_price,bmdatas$id)
+
+# individual country's price time series data
+bm_us<-subset(bmdatas,id=="United States")
+bm_china<-subset(bmdatas,id=="China")
+bm_sweden<-subset(bmdatas,id=="Sweden")
+
+Y<-bm_china
+# test for serial correlation
+#求出1-5阶滞后的系列相关性
+for (l in 1:5) {
+  t<-Box.test(Y$dollar_price,lag=l)
+  print(t)
+}
+#画acf图
+acf(Y$dollar_price)
+#画pacf图
+pacf(Y$dollar_price)
+
+# time series analysis,参数用order AP(P) 差分阶数 MA(q) 
+arima(Y$dollar_price,order=c(1,1,0))
+
+# similar analysis for other variable dollar_valuation
+
+
+

@@ -1,0 +1,12 @@
+---
+title: "eccloud2"
+author: "Elara"
+date: "2016年5月10日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# econometric computing

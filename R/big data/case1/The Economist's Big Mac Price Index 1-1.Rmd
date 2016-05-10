@@ -1,0 +1,65 @@
+---
+title: "The Economist's Big Mac Price Index1.1"
+author: "Elara"
+date: "2016年5月7日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Economist's Big Mac Price Index1.1
+The Economist's Big Mac Price (2016-1-7, 56 countries)   
+Data Preparation  
+Need data on local_price, dollar_ex (others can be computed)  
+Using readxl package to read Excel spreadsheet  
+```{r}
+# install.packages("readxl")
+setwd("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case1\\")
+library(readxl)
+args(read_excel)
+```
+read_excel can not read from url as "http://web.pdx.edu/~crkl/ec510/data/..."    
+bm201601<-read_excel("http://infographics.economist.com/2016/databank/BMfile2000toJan2016.xls",sheet=1)  
+try download.file first, then read it from there  
+download.file("http://infographics.economist.com/2016/databank/BMfile2000toJan2016.xls","bm2016.xls",mode="wb")  
+the following data file has been modified to include gdp_per_capita and Country=id  
+read不能直接读网页，用download.file("地址","文件名")  
+```{r}
+download.file("http://web.pdx.edu/~crkl/WISE2016/data/BMfile2000-2016.xls","bm2016.xls",mode="wb")
+bm201601<-read_excel("bm2016.xls",sheet=1)
+names(bm201601)
+dim(bm201601)
+```
+dollar_price=local_price/dollar_ex  
+dollar_ppp=local_price/local_price["United States"]  
+dollar valuation=100*(dollar_ppp-dollar_ex)/dollar_ex  
+(-% undervaluation, +% overvaluation)  
+
+# price in US$  
+```{r}
+bmp<-bm201601$dollar_price
+hist(bmp)
+hist(bmp,freq=F)
+lines(density(bmp))
+```  
+
+# dollar valuation (-% undervaluation, +% overvaluation)  
+```{r}
+plot(bm201601$dollar_valuation,main="Valuation Against U.S.Dollar, January 2016",
+     xlab="Country Index",ylab="U.S.$ Valuation in %")
+abline(h=0)
+text(bm201601$dollar_valuation,labels=bm201601$id,cex=0.5)
+```
+
+# gdp-adjusted valuation  
+```{r}
+Y<-bm201601$dollar_valuation-bm201601$dollar_adj_valuation
+plot(Y,main="GDP-Adjusted Valuation, January 2016",
+     xlab="Country Index",ylab="Valuation in %")
+abline(h=0)
+text(Y,labels=bm201601$id,cex=0.5)
+```
+
+

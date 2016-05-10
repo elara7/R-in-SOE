@@ -1,0 +1,59 @@
+---
+title: "The Economist's Big Mac Price Index 1-3"
+author: "Elara"
+date: "2016年5月8日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Economist's Big Mac Price 
+Data Preparation        
+Historical Data from 1986-9-6 to 2016-1-7       
+Cross Sections and Time Series with Gaps
+Unbalanced Panel Data   
+Using readxl package to read Excel spreadsheet          
+```{r}
+# install.packages("readxl")
+setwd("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case1\\")
+library(readxl)
+# the following data file has been modified to include gdp_per_capita and Country=id
+# download.file("http://web.pdx.edu/~crkl/WISE2016/data/BMfile2000-2016.xls","bm2016.xls",mode="wb")
+# data announcement dates: 24 times,字符串
+dates<-c("2016-1-7","2015-7-16","2015-1-22","2014-7-24","2014-1-23","2013-7-11","2013-1-31",
+         "2012-7-26","2012-1-12","2011-7-28","2010-3-17","2010-1-6","2009-7-16",
+         "2008-7-24","2007-7-5","2007-2-1","2006-5-26","2006-1-12","2005-6-9",
+         "2004-5-27","2003-4-24","2002-4-25","2001-4-19","2000-4-27")
+bmdata<-read_excel("bm2016.xls",sheet=1)
+#字符转为时间型,把第一个写入bmdata的date
+bmdata$date<-as.Date(dates[1])
+head(bmdata)
+#循环把所有dates都转为data并merge
+for (t in 2:24) {
+#bm载入xls的第t个表格（每个表格代表一个年份）
+  bm<-read_excel("bm2016.xls",sheet=t)
+#把第t年的年份信息asDate写入第t个bm表格的date内
+  bm$date<-as.Date(dates[t])
+  #匹配合并循环前的bmdata和循环产生的bm，把所有表格合并
+  bmdata=merge(bmdata,bm,all=T)
+}
+head(bmdata)
+#download.file("http://web.pdx.edu/~crkl/WISE2016/data/BMfile1986-1999-panel.xls","bm_old.xls",mode="wb")
+bmdata_old<-read_excel("bm_old.xls")
+#只有一个表，内含日期
+head(bmdata_old)
+#在前面的bmdata中再加入新一年的数据
+bmdata=merge(bmdata,bmdata_old,all=T)
+head(bmdata)
+# clean up and sort data
+#取出前6列
+bmdata=bmdata[complete.cases(bmdata[,1:6]),1:6]
+head(bmdata)
+#按照id和date排序
+bmdatas<-bmdata[order(bmdata$id,bmdata$date),]
+# compute dollar_valuation
+bmdatas$dollar_valuation<-100*(bmdatas$dollar_ppp-bmdatas$dollar_ex)/bmdatas$dollar_ex
+save(bmdatas,file="bmdatas.RData")
+```

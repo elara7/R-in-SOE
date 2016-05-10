@@ -1,0 +1,98 @@
+---
+title: "The Economist's Big Mac Price Index1.2"
+author: "Elara"
+date: "2016年5月7日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Economist's Big Mac Price Index1.2                
+Data Preparation
+Using readxl package to read Excel spreadsheet
+compute 2015 averages ot two reports for comparison
+```{r}
+# install.packages("readxl")
+setwd("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case1\\")
+library(readxl)
+# the following data file has been modified to include gdp_per_capita and Country=id
+# download.file("http://web.pdx.edu/~crkl/WISE2016/data/BMfile2000-2016.xls","bm2016.xls",mode="wb")
+bm201507<-read_excel("bm2016.xls",sheet=2)
+bm201501<-read_excel("bm2016.xls",sheet=3)
+bm2015<-merge(bm201501,bm201507,all=T)
+country<-unique(bm2015$id)
+#split data，求gdp均值
+gdp<-sapply(split(bm2015$gdp_per_capita/1000,bm2015$id),mean)
+price<-sapply(split(bm2015$local_price,bm2015$id),mean)
+ex<-sapply(split(bm2015$dollar_ex,bm2015$id),mean)
+valuation<-sapply(split(bm2015$dollar_valuation,bm2015$id),mean)
+adj_valuation<-sapply(split(bm2015$dollar_adj_valuation,bm2015$id),mean)
+adj_gdp<-(1+adj_valuation/100)/(1+valuation/100)
+# what is adj_gdp? this is the gdp adjustment factor applied to ppp for each country
+
+# same as using tapply: ex<-tapply(bm2015$dollar_ex,bm2015$id,mean)
+bmp<-price/ex  # dollar_price
+ppp<-price/price["United States"]
+val2015<-100*(ppp-ex)/ex   # compute dollar valuation
+summary(cbind(price,ex,bmp))
+
+cbind(valuation,val2015)
+
+gdp_level<-cut(gdp,breaks=c(-Inf,10,20,50,Inf),labels=c("Low","Middle","High","Rich"))
+bmp_level<-cut(bmp,breaks=c(-Inf,3,4.5,5,Inf),labels=c("Low","Middle","High","Expensive"))
+
+table(gdp_level)
+table(bmp_level,gdp_level)
+prop.table(table(bmp_level,gdp_level))
+prop.table(table(bmp_level,gdp_level),2)  # column-wise prop.
+prop.table(table(bmp_level,gdp_level),1)  # row-wise prop.
+
+plot(val2015,col="red",main="Valuation Against U.S.Dollar in 2015",
+     xlab="Country Index",ylab="U.S.$ Valuation in %")
+#text(val2015,labels=bm2015$id,cex=0.5)
+abline(h=0)
+identify(val2015,labels=country,n=3,cex=0.5)
+
+# data analysis
+t.test(bmp)
+t.test(bmp,gdp)
+
+wilcox.test(bmp)
+wilcox.test(bmp,gdp)
+
+# bmp-gdp relationship (Balassa-Samuleson Effect)
+# analysis of variance with category variables
+a1<-aov(bmp~gdp_level)
+a1
+summary(a1)
+# linear regression
+m1<-lm(bmp~gdp_level)
+summary(m1)
+anova(m1)
+# linear regression
+m2<-lm(bmp~gdp)
+summary(m2)
+anova(m2)
+
+# hypothesis testings
+# group-wise homosdasticity
+bartlett.test(m2$residuals,gdp_level)
+# normality
+shapiro.test(m2$residuals)
+# independence
+Box.test(m2$residuals)
+
+for (level in c("Low","Middle","High","Rich")) {
+  m<-lm(bmp~gdp,subset=(gdp_level==level))
+  print(summary(m))
+}
+
+# dollar valuation (-% undervaluation, +% overvaluation)
+# same analysis can be performed for dollar valuation
+m3<-lm(val2015~gdp)
+summary(m3)
+anova(m3)
+```
+

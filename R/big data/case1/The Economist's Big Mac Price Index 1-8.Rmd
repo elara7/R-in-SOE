@@ -1,0 +1,79 @@
+---
+title: "The Economist's Big Mac Price Index 1-8"
+author: "Elara"
+date: "2016年5月8日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Economist's Big Mac Price 
+Historical Data from 1986-9-6 to 2016-1-7
+Cross Sections and Time Series with Gaps
+Unbalanced Panel Data
+```{r}
+# install.packages("plm")
+library(plm)
+
+setwd("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case1\\")
+# load previously saved sorted (date) dataset
+load("bmdatas.RData")   
+class(bmdatas)
+summary(bmdatas)
+
+price<-sapply(split(bmdatas$dollar_price,bmdatas$id),mean)
+ex<-sapply(split(bmdatas$dollar_ex,bmdatas$id),mean)
+
+# Set data as panel data
+bmdata <- plm.data(bmdatas, index=c("id","date"))
+class(bmdata)
+summary(bmdata)
+
+# panel data analysis
+Y<-bmdata$dollar_price
+X<-bmdata$dollar_valuation
+# X<-100*(bmdata$dollar_ppp/bmdata$dollar_ex - 1)  # dollar_valuation
+
+# F test for fixed effects versus OLS
+pFtest(Y ~ X, data=bmdata, effect="individual")
+pFtest(Y ~ X, data=bmdata, effect="time")
+
+# LM test for random effects versus OLS
+plmtest(Y ~ X, data=bmdata, effect="individual", type="bp")
+plmtest(Y ~ X, data=bmdata, effect="time", type="bp")
+
+# Pooled OLS estimator
+pooling <- plm(Y ~ X, data=bmdata, model= "pooling")
+summary(pooling)
+
+# Between estimator
+between <- plm(Y ~ X, data=bmdata, model= "between")
+summary(between)
+
+# First differences estimator
+firstdiff <- plm(Y ~ X, data=bmdata, model= "fd")
+summary(firstdiff)
+
+# Fixed effects or within estimator
+fixed <- plm(Y ~ X, data=bmdata, model= "within")
+summary(fixed)
+# extract fixed effects
+summary(fixef(fixed))
+
+# Random effects estimator
+random <- plm(Y ~ X, data=bmdata, model= "random") # use random.method="swar"
+summary(random)
+
+# Hausman test for fixed versus random effects model
+phtest(random,fixed)
+
+library("lmtest")
+coeftest(fixed,vcovHC)
+coeftest(random,vcovHC)
+
+plot(X,Y)
+abline(pooling)
+abline(random,col="red")
+# abline(fixed,col="blue") # need to adjust

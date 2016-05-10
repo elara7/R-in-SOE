@@ -126,7 +126,7 @@ ggplot(small)+geom_bar(aes(x=clarity,fill=cut))+coord_polar()#风玫瑰图
 
 #facet系列（分面）*********************************************************************
 p <- ggplot(small,aes(x=carat,y=price))+geom_point(aes(colour=cut))+scale_y_log10()
-p+facet_wrap(~cut)#按照不同cut分别画出5个图
+p+facet_grid(~cut)#按照不同cut分别画出5个图，横着排
 p+facet_wrap(~cut)+stat_smooth()#分别在5个图画拟合
 p+stat_smooth()+facet_wrap(~cut)#效果一样
 
