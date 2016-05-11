@@ -611,6 +611,7 @@ select(lm.ridge(y ~ ., longley, lambda = seq(0,0.1,0.0001)))
 ```
 
 ### Monte Carlo Simulation(about ridge regression)       
+#### example
 ```{r}
 library("MASS")
 #1 生成具有共线性的XY;比较OLS和RIDGE系数
@@ -635,19 +636,23 @@ s <- matrix(NA, nr=n, nc=3)
 corr <- matrix(NA, nr=n, nc=3)
 #在r里面放
 for (i in 1:n) {
-#生成500个数据
+#生成默认20个数据
 m <- my.sample()
 #corr第i行里面放第i次的x1和x2的相关系数
 corr[i,] <- cor(m[,2],m[,3])
-#r第i行放第i次数据的OLS的回归系数,包括截距有3列
+#r第i行放第i次数据的OLS的回归系数,coef返回包括截距项
+lm(m[,1]~m[,-1])$coef
 r[i,] <- lm(m[,1]~m[,-1])$coef
-#s的第i行,第2和3列放λ=0.1的岭回归的系数
+#s的第i行,第2和3列放λ=0.1的岭回归的系数,coef返回的系数不带截距项
+lm.ridge(m[,1]~m[,-1], lambda=.1)$coef
 s[i,2:3] <- lm.ridge(m[,1]~m[,-1], lambda=.1)$coef
+#s的第一列放y的均值
 s[i,1] <- mean(m[,1])
 }
 # 画图
 #windows(7,7)
 #OLS的截距项密度
+head(r[,1])
 plot( density(r[,1]), xlim=c(-3,3),
 main="Multicolinearity: high variance")
 abline(v=0, lty=3)
@@ -661,10 +666,11 @@ lines( density(r[,3]), col="blue" )
 #RIDGE的x2系数密度
 lines( density(s[,3]), col="blue", lty=2 )
 abline(v=-1, col="blue", lty=3) # We give the mean, to show that it is biased
-#求密度函数,数据是x以x为基准
+#生成密度数据d在x处的密度(概率)
 evaluate.density <- function (d,x, eps=1e-6) {
 density(d, from=x-eps, to=x+2*eps, n=4)$y[2]
 }
+#x是系数均值,画出在x处的密度点(概率值)
 x<-mean(r[,2]); points( x, evaluate.density(r[,2],x) )
 x<-mean(s[,2]); points( x, evaluate.density(s[,2],x) )
 x<-mean(r[,3]); points( x, evaluate.density(r[,3],x) )
@@ -677,30 +683,57 @@ legend( par("usr")[2], par("usr")[4], yjust=1, xjust=1,
 c("classical regression", "ridge regression"),
 lwd=1, lty=c(1,2),
 col=par("fg") )
+```
 
-
+#### 计算OLS和ridge的估计量的均值和方差
+```{r}
 apply(r,2,mean)
 apply(r,2,var)
 apply(s,2,mean)
 apply(s,2,var)
+```             
+但无法直接比较,更好的方法是比较MSE  
+
+#### MSE关于λ的变化
+```{r}
 n <- 500
+#V:n(500)行3列按行排矩阵,每行都是0,1,-1(真实系数)
 v <- matrix(c(0,1,-1), nr=n, nc=3, byrow=T)
 mse <- NULL
+mse1 <- NULL
+mse3 <- NULL
+#kl:λ取值点
 kl <- c(1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2, 2e-2, 5e-2, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1, 1.2, 1.4, 1.6, 1.8, 2.0)
 for (k in kl) {
 r <- matrix(NA, nr=n, nc=3)
 for (i in 1:n) {
+#生成20个y,x1,x2
 m <- my.sample()
+#r的第i行的2和3列放λ为k的时候的ridge回归系数(本次-第i次)
 r[i,2:3] <- lm.ridge(m[,1]~m[,-1], lambda=k)$coef
+#r的第i行第一列放本次(第i次)m中y的均值
 r[i,1] <- mean(m[,1])
+#最终是500行,每行都生成一个给定λ时的ridge系数(500组系数)
 }
+#计算mse,()估计值-真实值)^2求期望(列均值),[2]取出第二列(x1的mse),append,把新的mse加入mse向量中
 mse <- append(mse, apply( (r-v)^2, 2, mean )[2])
+mse1 <- append(mse1, apply( (r-v)^2, 2, mean )[1])
+mse3 <- append(mse3, apply( (r-v)^2, 2, mean )[3])
 }
 plot( mse ~ kl, type="l" )
-title(main="MSE evolution")
+title(main="MSE evolution of x2")
+#截距项与残差有关,有波动
+plot( mse1 ~ kl, type="l" )
+title(main="MSE evolution of interception")
+plot( mse3 ~ kl, type="l" )
+title(main="MSE evolution of x1")
 ```
+according to the literature, it is VERY high: they say you should not go beyond 0.1
 
-# Best Subset Selection         
+# Best Subset Selection  
+1. R2   
+2. adj.R2(一般用summary可以调用)       
+3. $C_p$值,$C_p=\frac{1}{n}(RSS+2k\hat{sigma}^{2})$,k是变量个数,\hat{sigma}^{2}
 k个变量中选出i个变量做回归,并找出最好的i个变量
 i从1到
 每个模型都是选出i个变量的时候,Cki个模型中RSS最小的模型
