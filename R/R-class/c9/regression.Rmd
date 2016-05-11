@@ -555,4 +555,229 @@ condition number
 - 逐步回归            
 - 岭回归  
 
+###ridge regression
+没有多重共线性也可以用,MSE在k合适的时候更小
+$$
+\hat{\beta}=(X'X+K)^{-1}X'Y
+$$
+其中X'X和X'Y的元素有相关性
+$$
+K=
+\left\{
+\begin{array}{llll}
+\k_1 $ 0 $ \dots $ 0  \\
+\0 $ k_2 $ \dots $ 0  \\
 
+$$
+$$
+y_i=\beta_0+\beta_1D_{i1}+\beta_2D_{i2}+\epsilon_i=
+\left\{ 
+\begin{array}{ll}
+\beta_0+\beta_1+\epsilon_i & \textrm{if ith person is Asian} \\
+\beta_0+\beta_2+\epsilon_i & \textrm{if ith person is Caucasian} \\
+\beta_0+\epsilon_i & \textrm{if ith person is African Americ} \\
+\end{array} 
+\right.
+$$
+
+### example
+```{r}
+#install.packages("MASS")
+library("MASS")
+## Warning: package ’MASS’ was built under R version 3.2.5
+library("car")
+load("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c9\\longley.RData")
+lm.normal<-lm(y~.,data=longley)
+summary(lm.normal)
+#R方非常高而且有变量不显著→有可能有多重共线性
+#VIF检验(单个>10准则)
+vif(lm.normal)
+#VIF检验(平均>20准则)
+mean(vif(lm.normal))
+#相关系数矩阵(2:6去掉Y数据)
+XX<-cor(longley[2:6])
+#condition number(>1000准则)
+kappa(XX,exact=T)
+#进行岭回归
+lm.r<-lm.ridge(y ~ ., longley)
+#windows(7,7)
+#岭际图
+plot(lm.ridge(y ~ ., longley, lambda = seq(0,0.1,0.001)))
+## modified HKB estimator is 0.006688179
+## modified L-W estimator is 0.03647802
+## smallest value of GCV at 0.0028
+```
+###Monte Carlo Simulation
+```{r}
+library("MASS")
+#1 生成具有共线性的XY,;比较OLS和RIDGE系数
+set.seed(1234)
+x1 <- rnorm(20)
+x2 <- rnorm(20,mean=x1,sd=.01)
+y <- rnorm(20,mean=3+x1+x2)
+lm(y~x1+x2)$coef
+lm.ridge(y~x1+x2,lambda=1)
+#2 生成具有共线性的数据
+my.sample <- function (n=20) {
+x <- rnorm(n)
+x1 <- x + .1*rnorm(n)
+x2 <- x + .1*rnorm(n)
+y <- 0 + x1 - x2 + rnorm(n)
+cbind(y, x1, x2)
+}
+n <- 500
+r <- matrix(NA, nr=n, nc=3)
+s <- matrix(NA, nr=n, nc=3)
+corr <- matrix(NA, nr=n, nc=3)
+for (i in 1:n) {
+m <- my.sample()
+corr[i,] <- cor(m[,2],m[,3])
+#r OLS的回归系数,包括截距有3列
+r[i,] <- lm(m[,1]~m[,-1])$coef
+s[i,2:3] <- lm.ridge(m[,1]~m[,-1], lambda=.1)$coef
+s[i,1] <- mean(m[,1])
+}
+# 画图
+#windows(7,7)
+#OLS的截距项密度
+plot( density(r[,1]), xlim=c(-3,3),
+main="Multicolinearity: high variance")
+abline(v=0, lty=3)
+#OLS的x1系数密度
+lines( density(r[,2]), col="red" )
+#RIDGE的x1系数密度
+lines( density(s[,2]), col="red", lty=2 )
+abline(v=1, col="red", lty=3)
+#OLS的x2系数密度
+lines( density(r[,3]), col="blue" )
+#RIDGE的x2系数密度
+lines( density(s[,3]), col="blue", lty=2 )
+abline(v=-1, col="blue", lty=3) # We give the mean, to show that it is biased
+#求密度函数,数据是x以x为基准
+evaluate.density <- function (d,x, eps=1e-6) {
+density(d, from=x-eps, to=x+2*eps, n=4)$y[2]
+}
+x<-mean(r[,2]); points( x, evaluate.density(r[,2],x) )
+x<-mean(s[,2]); points( x, evaluate.density(s[,2],x) )
+x<-mean(r[,3]); points( x, evaluate.density(r[,3],x) )
+x<-mean(s[,3]); points( x, evaluate.density(s[,3],x) )
+legend( par("usr")[1], par("usr")[4], yjust=1,
+c("intercept", "x1", "x2"),
+lwd=1, lty=1,
+col=c(par("fg"), "red", "blue"))
+legend( par("usr")[2], par("usr")[4], yjust=1, xjust=1,
+c("classical regression", "ridge regression"),
+lwd=1, lty=c(1,2),
+col=par("fg") )
+
+
+apply(r,2,mean)
+apply(r,2,var)
+apply(s,2,mean)
+apply(s,2,var)
+n <- 500
+v <- matrix(c(0,1,-1), nr=n, nc=3, byrow=T)
+mse <- NULL
+kl <- c(1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2, 2e-2, 5e-2, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1, 1.2, 1.4, 1.6, 1.8, 2.0)
+for (k in kl) {
+r <- matrix(NA, nr=n, nc=3)
+for (i in 1:n) {
+m <- my.sample()
+r[i,2:3] <- lm.ridge(m[,1]~m[,-1], lambda=k)$coef
+r[i,1] <- mean(m[,1])
+}
+mse <- append(mse, apply( (r-v)^2, 2, mean )[2])
+}
+plot( mse ~ kl, type="l" )
+title(main="MSE evolution")
+```
+
+# Best Subset Selection         
+k个变量中选出i个变量做回归,并找出最好的i个变量
+i从1到
+每个模型都是选出i个变量的时候,Cki个模型中RSS最小的模型
+```{r}
+library(ISLR)
+names(Hitters)
+dim(Hitters)
+#去掉缺失值
+sum(is.na(Hitters$Salary))
+Hitters=na.omit(Hitters)
+dim(Hitters)
+sum(is.na(Hitters))
+
+library(leaps)
+#salary做y,其他做x,逐步加入,分别回归19个模型出来
+regfit.full=regsubsets(Salary~.,data=Hitters,nvmax=19)
+reg.summary=summary(regfit.full)
+#返回的项目
+names(reg.summary)
+#每个模型的adjr2,cp,bic
+reg.summary$adjr2
+reg.summary$cp
+reg.summary$bic
+#windows(7,7)
+par(mfrow=c(2,2))
+#RSS与变量个数关系
+plot(reg.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+#adjr2与变量个数的关系
+plot(reg.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+#找出adjr2最大的模型
+which.max(reg.summary$adjr2)
+#在图上红色标注
+points(11,reg.summary$adjr2[11], col="red",cex=2,pch=20)
+#cp值与变量个数关系
+plot(reg.summary$cp,xlab="Number of Variables",ylab="Cp",type='l')
+#找出cp值最小的模型
+which.min(reg.summary$cp)
+#标点
+points(10,reg.summary$cp[10],col="red",cex=2,pch=20)
+#找出bic最小
+which.min(reg.summary$bic)
+#bic与变量个数关系
+plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+#标点
+points(6,reg.summary$bic[6],col="red",cex=2,pch=20)
+par(mfrow=c(2,2))
+plot(regfit.full,scale="r2")
+plot(regfit.full,scale="adjr2")
+plot(regfit.full,scale="Cp")
+plot(regfit.full,scale="bic")
+coef(regfit.full,6)
+```
+
+# Stepwise逐步回归
+- 向前
+- 向后
+- 混合
+```{r}
+cement<-data.frame( X1=c( 7, 1, 11, 11, 7, 11, 3, 1, 2, 21, 1, 11, 10),
+X2=c(26, 29, 56, 31, 52, 55, 71, 31, 54, 47, 40, 66, 68),
+X3=c( 6, 15, 8, 8, 6, 9, 17, 22, 18, 4, 23, 9, 8),
+X4=c(60, 52, 20, 47, 33, 22, 6, 44, 22, 26, 34, 12, 12),
+Y =c(78.5, 74.3, 104.3, 87.6, 95.9, 109.2, 102.7, 72.5, 93.1,115.9, 83.8, 113.3, 109.4)
+)
+lm.sol<-lm(Y ~ X1+X2+X3+X4, data=cement)
+summary(lm.sol)
+#全部不显著但是r2非常大,有共线性
+#逐步删去,按照AIC准则,每行代表去掉这个变量的数据,none代表不去掉,当none的AIC最小时停止
+lm.step<-step(lm.sol)
+summary(lm.step)
+#?
+drop1(lm.step)
+#最终
+lm.opt<-lm(Y ~ X1+X2, data=cement); summary(lm.opt)
+```
+
+## 更新模型
+```{r}
+x1=rnorm(100)
+x2=rnorm(100)
+x3=rnorm(100)
+y=rnorm(100)
+fm2 <- lm(y ~ x1 + x2)
+#加入x3变量
+fm3 <- update(fm2, . ~ . + x3)
+#加入y2项
+smf3 <- update(fm3, I(y^2) ~ .) 
+```

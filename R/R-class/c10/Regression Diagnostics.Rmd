@@ -1,0 +1,22 @@
+---
+title: "Regression Diagnostics"
+author: "Elara"
+date: "2016年5月11日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#模型错误设定 Model misspecification
+形式:   
+1. 缺失变量     
+2. 加入错误变量         
+3. 设定错误形式         
+4. 测量误差             
+5. 随机扰动项错误设定
+
+## 加入错误变量(过度拟合)
+## 遗漏变量(拟合不足)
+## Ramsey's RESET
