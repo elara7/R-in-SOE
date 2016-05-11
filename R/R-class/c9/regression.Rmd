@@ -556,31 +556,29 @@ condition number
 - 岭回归  
 
 ###ridge regression
-没有多重共线性也可以用,MSE在k合适的时候更小
+[ridge regression](file:///C:/Users/44180/Documents/R-in-SOE/R/learning%20out%20side/ridge_regression.html)
+
+没有多重共线性也可以用,MSE在k合适的时候会比OLS更小      
+估计量:
 $$
 \hat{\beta}=(X'X+K)^{-1}X'Y
 $$
 其中X'X和X'Y的元素有相关性
 $$
 K=
-\left\{
-\begin{array}{llll}
-\k_1 $ 0 $ \dots $ 0  \\
-\0 $ k_2 $ \dots $ 0  \\
-
-$$
-$$
-y_i=\beta_0+\beta_1D_{i1}+\beta_2D_{i2}+\epsilon_i=
-\left\{ 
-\begin{array}{ll}
-\beta_0+\beta_1+\epsilon_i & \textrm{if ith person is Asian} \\
-\beta_0+\beta_2+\epsilon_i & \textrm{if ith person is Caucasian} \\
-\beta_0+\epsilon_i & \textrm{if ith person is African Americ} \\
-\end{array} 
-\right.
-$$
+\left(
+\begin{array}{cccc}
+k_1 & 0 & \ldots & 0  \\
+0 & k_2 & \ldots & 0  \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & \ldots & \ldots & k_p \\
+\end{array}
+\right)
+$$      
+K的元素大小增加,$\hat{\beta}$接近0,其偏差随着$k_i$增加而增加,方差随着$k_i$增加而减少
 
 ### example
+#### 检验多重共线性     
 ```{r}
 #install.packages("MASS")
 library("MASS")
@@ -598,26 +596,31 @@ mean(vif(lm.normal))
 XX<-cor(longley[2:6])
 #condition number(>1000准则)
 kappa(XX,exact=T)
-#进行岭回归
-lm.r<-lm.ridge(y ~ ., longley)
-#windows(7,7)
-#岭际图
-plot(lm.ridge(y ~ ., longley, lambda = seq(0,0.1,0.001)))
-## modified HKB estimator is 0.006688179
-## modified L-W estimator is 0.03647802
-## smallest value of GCV at 0.0028
 ```
-###Monte Carlo Simulation
+
+#### 进行岭回归
+```{r}
+#默认λ为0
+lm.r<-lm.ridge(y ~ ., longley)
+#lm.ridge(y ~ ., longley, lambda = seq(0,0.1,0.001))可得到λ从0到1每隔0.001的模型
+#windows(7,7)
+#岭际图(各个变量系数的t检验值与λ的关系曲线)
+plot(lm.ridge(y ~ ., longley, lambda = seq(0,0.1,0.001)))
+#最佳模型选择()
+select(lm.ridge(y ~ ., longley, lambda = seq(0,0.1,0.0001)))
+```
+
+### Monte Carlo Simulation(about ridge regression)       
 ```{r}
 library("MASS")
-#1 生成具有共线性的XY,;比较OLS和RIDGE系数
+#1 生成具有共线性的XY;比较OLS和RIDGE系数
 set.seed(1234)
 x1 <- rnorm(20)
 x2 <- rnorm(20,mean=x1,sd=.01)
 y <- rnorm(20,mean=3+x1+x2)
 lm(y~x1+x2)$coef
 lm.ridge(y~x1+x2,lambda=1)
-#2 生成具有共线性的数据
+#2 生成n个具有共线性的数据的函数,返回n行3列,列分别是y x1 x2
 my.sample <- function (n=20) {
 x <- rnorm(n)
 x1 <- x + .1*rnorm(n)
@@ -626,14 +629,19 @@ y <- 0 + x1 - x2 + rnorm(n)
 cbind(y, x1, x2)
 }
 n <- 500
+#n行3列
 r <- matrix(NA, nr=n, nc=3)
 s <- matrix(NA, nr=n, nc=3)
 corr <- matrix(NA, nr=n, nc=3)
+#在r里面放
 for (i in 1:n) {
+#生成500个数据
 m <- my.sample()
+#corr第i行里面放第i次的x1和x2的相关系数
 corr[i,] <- cor(m[,2],m[,3])
-#r OLS的回归系数,包括截距有3列
+#r第i行放第i次数据的OLS的回归系数,包括截距有3列
 r[i,] <- lm(m[,1]~m[,-1])$coef
+#s的第i行,第2和3列放λ=0.1的岭回归的系数
 s[i,2:3] <- lm.ridge(m[,1]~m[,-1], lambda=.1)$coef
 s[i,1] <- mean(m[,1])
 }

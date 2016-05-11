@@ -11,12 +11,54 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #模型错误设定 Model misspecification
 形式:   
-1. 缺失变量     
-2. 加入错误变量         
-3. 设定错误形式         
-4. 测量误差             
-5. 随机扰动项错误设定
+1. 缺失变量  Omission of a relevant variable(s)                 
+2. 加入错误变量  Inclusion of an unnecessary variable(s)                    
+3. 设定错误形式  Adopting the wrong functional form                  
+4. 测量误差  Errors of measurement              
+5. 随机扰动项错误设定  Incorrect specification of the stochastic error term             
 
 ## 加入错误变量(过度拟合)
-## 遗漏变量(拟合不足)
-## Ramsey's RESET
+- 估计量偏差:系数估计量仍然无偏,且错误变量系数期望为0(不显著)     
+- 估计连方差: 尽管残差的方差仍然正确估计,一般的置信区间和假设检验也仍然可用,
+但是系数估计量的方差会比正确模型的方差更大      
+假设正确模型是:
+$$
+Y_i=\beta_1+\beta_2X_{2i}+u_i
+$$      
+过度拟合模型是:
+$$
+Y_i=\alpha_1+\alpha_2X_{2i}+\alpha_3X_{3i}+u_i
+$$      
+正确设定模型方差:
+$$
+var(\hat{\beta}_2)=\frac{\sigma ^{2}}{\sum x_{2i}^{2}}
+$$
+过度拟合模型方差:
+$$
+var(\hat{\alpha}_2)=\frac{\sigma ^2}{\sum x_{2i}^{2}(1-r_{23}^{2})}
+$$       
+必须在遗漏变量和过度拟合中trade off 的话,选择过度拟合           
+## 遗漏变量(拟合不足)   
+1. 如果遗漏的变量和保留变量有相关性,那么估计量全都有偏且不一致          
+2. 如果遗漏的变量和保留变量无关,那么无关的保留变量估计量无偏,而有关的以及截距项估计量有偏       
+3. 随机扰动项的方差错误估计     
+4. 估计量方差的估计量有偏       
+5. 预测值有偏且置信区间不可信   
+## Ramsey's RESET       
+regression specification error test     
+检验fitted value $\hat{y}$的平方加入回归模型后是否显著.也可以用一个原自变量(regressors)的平方或者
+自变量矩阵X的第一主成份作为辅助变量     
+如果是一元回归,三种算法结果相同
+```{r}
+#install.packages("lmtest")
+library("lmtest")
+#生成模拟变量
+x <- c(1:30)
+y1 <- 1 + x + x^2 + rnorm(30)
+y2 <- 1 + x + rnorm(30)
+resettest(y1 ~ x , power=2, type="regressor")
+#原假设:没有遗漏变量,p值很小则拒绝原假设
+resettest(y2 ~ x , power=2, type="regressor")
+```
+
+
