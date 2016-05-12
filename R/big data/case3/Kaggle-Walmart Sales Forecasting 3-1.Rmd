@@ -8,7 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+有45个store 每个store有99个部门(可能没那么多).截面方面
+时间从2011-2013(2014),时间序列维度
 # Walmart Sales
 # Data Visualization
 #
