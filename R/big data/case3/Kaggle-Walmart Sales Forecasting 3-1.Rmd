@@ -1,7 +1,26 @@
+---
+title: "Kaggle-Walmart Sales Forecasting 3-1"
+author: "Wang ZeXian"
+date: "2016年5月12日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 # Walmart Sales
 # Data Visualization
 #
 library(readr)
+# Store Dept Date Weekly_Sales IsHoliday: 2010-02-05 ~ 2012-10-26
+data1<-read_csv("C:/Course16/WISE2016/data/Walmart_train.csv")
+# Store Type Size
+data2<-read_csv("C:/Course16/WISE2016/data/Walmart_stores.csv")
+# Store Date Temperature Fuel_Price Markdown1-5 CPI Unemplyment IsHoliday
+data3<-read_csv("C:/Course16/WISE2016/data/Walmart_features.csv")
+# Store Dept Date IsHoliday: 2012-11-02 ~ 2013-07-26
+data4<-read_csv("C:/Course16/WISE2016/data/Walmart_test.csv")
 # Store Dept Date Weekly_Sales IsHoliday: 2010-02-05 ~ 2012-10-26
 data1<-read_csv("C:\\Users\\44180\\Documents\\Surface-workandstudy\\soe\\bigdata\\Walmart_train.csv")
 data1<-read_csv("D:\\PC-workandstudy\\soe\\bigdata\\data of case3\\Walmart_train.csv")
