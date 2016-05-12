@@ -38,7 +38,7 @@ library(lars)
 # can do ridge and cv
 # can do lasso and cv
 
-# forward stepwise regression
+# forward stepwise regression,normalize是否标准化
 m0 <- lars(X,Y,type="step",trace=T,normalize=F)
 summary(m0)
 plot(m0)
@@ -89,6 +89,6 @@ m2cv.coef[m2cv.coef!=0]
 # variables selected may be different:
 # Step: 
 # Ridge:
-# LASSO: 
+# LASSO: 相对来说变量偏少
 
 
