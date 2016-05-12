@@ -1,0 +1,157 @@
+---
+title: "Labmeeting Edwin"
+output: html_document
+date: "12 Nov 2015"
+---
+
+We are going to do some SQL-like operations in *R* using *dplyr*. All exercises are done on the Lahman Batting data set in the `Lahman` package. Please scan the data documentation first (by `?Batting`). The examples below are using the `ddply` package, the precursor of *dplyr*, this package is less complete and less intuitive.
+
+
+```{r} 
+library(dplyr)
+library(Lahman)
+library(ggplot2)
+```
+
+# Exercises
+
+1. *Summarizing statistics:*
+a. A stolen base is a baseball statistic credited to a baserunner when he successfully advances to the next base while the pitcher is throwing the ball to home plate. [This guy](https://www.youtube.com/watch?v=h5NAXI60tK8) does it five times in one game. Who stole most bases in a single year?
+
+```{r}
+Batting %>% 
+  arrange(SB %>% desc) %>% 
+  select(playerID, teamID, yearID, SB) %>% 
+  head(1)
+```
+
+b. What is the trend in stolen bases, make a plot that shows the maximum over time. Do this from 1900 onwords.
+
+```{r}
+Batting %>%
+  filter(yearID > 1899) %>% 
+  group_by(yearID) %>% 
+  summarise(max_sb = SB %>% max(na.rm = TRUE)) %>%
+  ggplot(aes(yearID, max_sb)) + geom_line()
+```
+
+c. Can you think of another statistic of stolen bases that might show the same pattern as the plot in b? You might want to use the `top_n` function that is in `dplyr`.
+
+```{r}
+Batting %>%
+  filter(yearID > 1899) %>% 
+  group_by(yearID) %>% 
+  top_n(100, SB) %>% 
+  summarise(mean_top_100_sb = mean(SB)) %>%
+  ggplot(aes(yearID, mean_top_100_sb)) + geom_line()
+```
+
+d. What is your conclusion bases on the results of *b* and *c*? What is a follow-up research question?
+
+*Between the twenties and the sixties the stealing of bases was much less popular than before and after. The plots show very much the same trend however the plot at b shows a high spike in the late seventies / early eighties.*
+**Follow-up quesions: are the spikes caused by one player or were several players responsible fore this?**
+
+e. Try to answer the question you asked yourself at d?
+
+```{r}
+Batting %>% 
+  filter(yearID > 1973 & yearID < 1988) %>% 
+  group_by(yearID) %>%
+  select(playerID, teamID, yearID, SB) %>%
+  filter(SB > 90) 
+```
+
+*Several base stealers active in these years, but henderi01 and colemvi01 are the superstars*
+
+2. *Calculating ratios* 
+
+I am sure you know what a home run is, wacking the ball out of the field in the stands. We want to know the greatest home run hitters.
+
+a. Find the top 10 players with the most seasons in which they hit at least 30 home runs.
+
+```{r}
+Batting %>% 
+  filter(HR >= 30) %>% 
+  group_by(playerID) %>%
+  summarise(nr_30_pl_seasons =  n()) %>%
+  top_n(10, nr_30_pl_seasons) %>%
+  arrange(nr_30_pl_seasons %>% desc)
+```
+
+b. Not every player did play the same number of games. Order the players on the number of home runs they hit by games they have played. Only look at players that played at least 50 games. Do you see a trend in the results?
+
+```{r}
+Batting %>% 
+  filter(G >= 50) %>% 
+  mutate(HR_per_games = HR / G) %>%
+  arrange(HR_per_games %>% desc) %>%
+  select(playerID, yearID, G, HR, HR_per_games) %>% 
+  head(10)
+```
+
+c. We want to know if there is a change over time in the number of players that hit at least one home run, we analyze this on decade level. First determine the number of players per decade. (The `substr` function might come in handy here).
+
+```{r}
+players_per_decade <- Batting %>% 
+  mutate(decade = yearID %>% substr(1,3)) %>% 
+  select(decade, playerID) %>% 
+  distinct %>% 
+  group_by(decade) %>% 
+  summarise(nr_of_players = n())
+```
+
+d. Expand your work at *c* to calculate the ratios. You can either create an extra table and join it to the result at *c*  or you can expand the code from *c* and calculate it in one go. Why not try both? (Doing it one go can be done in many ways, you could use the `any` and `all` functions).
+
+```{r}
+# Extra result
+player_with_hr_per_decade <- Batting %>% 
+  filter(HR > 0) %>% 
+  mutate(decade = yearID %>% substr(1,3)) %>% 
+  select(decade, playerID) %>% 
+  distinct %>% 
+  group_by(decade) %>% 
+  summarise(nr_of_players_with_hr = n())
+
+result_1 <- inner_join(players_per_decade, player_with_hr_per_decade)  %>% 
+  mutate(prop_with_hr = nr_of_players_with_hr / nr_of_players)
+
+# Doing it on go
+result_2 <- Batting %>% 
+  mutate(decade = yearID %>% substr(1,3),
+         hit_hr =  HR > 0) %>% 
+  select(decade, playerID, hit_hr) %>% 
+  group_by(playerID, decade) %>% 
+  summarise(hit_hr_in_decade = any(hit_hr, na.rm = TRUE)) %>% 
+  group_by(decade) %>% 
+  summarise(nr_of_players_with_hr = sum(hit_hr_in_decade, na.rm = TRUE),
+            nr_of_players         = n()) %>% 
+  mutate(prop_with_hr = nr_of_players_with_hr / nr_of_players)
+
+ggplot(result_1, aes(decade %>% as.numeric, prop_with_hr)) +
+  geom_point() +
+  geom_line()
+```
+
+It was more of a burden to do it one go than it was to create two results and join them. In this case you could apply both, however joining tables is hard work for a computer. If you had to do it on millions of record the doing it in one go would be much quicker. As often in computing in SQL there is a clear human work - machine work trade-off.
+
+3. *Joining* 
+
+The number of hits, how many times did a player hit the ball. We are going to search players who had an off-season. Find the players that had the greatest discrepancy between their median hit/games ratio and their hit/games ratio in a single year. Only use the years in which the player played at least 50 games, and in which there was at least one hit for that player.
+
+```{r}
+hit_ratios_per_player_year <- Batting %>% 
+  filter(G >= 50, H > 0) %>% 
+  mutate(hit_games_ratio = H / G) %>%
+  select(playerID, yearID, hit_games_ratio)
+
+median_hit_ratios_per_player <- hit_ratios_per_player_year %>%
+  group_by(playerID) %>% 
+  summarise(median_hit_games_ratio = median(hit_games_ratio))
+
+inner_join(hit_ratios_per_player_year, median_hit_ratios_per_player) %>% 
+  mutate(diff_with_median = hit_games_ratio - median_hit_games_ratio) %>% 
+  arrange(diff_with_median) %>% 
+  head(10)
+  
+```
+

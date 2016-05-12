@@ -1,0 +1,184 @@
+---
+output: pdf_document
+---
+
+<!-- To knit this .Rmd file you should have installed the nycflights13 package -->
+
+# Assignment Week 1:
+
+# Working with Vectors and Filtering Indices
+
+\vskip 1cm
+
+- Yi He
+
+- s1684698
+
+
+
+
+
+NOTES: 
+
+make a reproducable report of this assignment according to report requirements we have set in this course. See blackboard for more information.    
+
+Set al R code chunks to eval = TRUE.   
+
+When you have difficulties making this assignment it is advisable to take the first six lessons of the R programming course of the R package 'swirl'.
+
+
+\newpage 
+
+### 1. Filtering and indices
+
+First load the package `nycflights13` using the following code chunk.
+
+```{r, label = preps, message = TRUE}
+library(nycflights13)
+```
+
+Before you start with the assignment find the `nycflights13` package documentation using `help(package = 'nycflights13')` and take a look at the documentation of the `flights` objects. 
+
+Having read the documentation, fill out here your code to see the class and the dimensions of the `flights` object.
+```{r, label = classdim}
+class(flights)
+dim(flights)
+```
+
+In this data object we would like you to create a logical vector in each code chunk such that we can find all flights...   
+
+...to SFO or OAK
+```{r label = flt1, eval = TRUE}
+flt.1 <- c(flights$dest == 'SFO' | flights$dest == 'OAK')
+```
+
+There are `r sum(flt.1, na.rm = TRUE)` flights to SFO or OAK.
+
+... delayed by more than an hour   
+```{r label = flt2, eval = TRUE}
+flt.2 <- c(flights$dep_delay > 60) 
+```
+There are `r sum(flt.2, na.rm = TRUE)` flights delayed by more than an hour.
+
+... that departed between midnight and five am 
+```{r label = flt3, eval = TRUE}
+flt.3 <- c(flights$dep_time < 500 & flights$dep_time > 0) 
+```
+There are `r sum(flt.3, na.rm = TRUE)` flights that departed between midnight and five am.
+
+... for which the arrival delay was more than twice the departure delay   
+
+```{r label = flt4, eval = TRUE}
+flt.4 <- c(flights$arr_delay > 2 * flights$dep_delay) 
+```
+
+There are `r sum(flt.4, na.rm = TRUE)` flights for which the arrival delay was more than twice the departure delay.
+
+\newpage
+
+### 2. Creating Variables
+
+First run the following code to create a data frame `data.set` with no variables:
+
+```{r, label = data.set, eval = TRUE}
+set.seed(20151029)
+indx.flights <- sample(1:nrow(flights), 1e3) 
+N <- 1e3
+data.set <- data.frame(row.names = 1:N)
+```
+
+
+
+Now, we would like to add the following variables. 
+
+- `x1`: numeric vector with components \(N/2,N/2 -1, N/2 - 2,\ldots,2,1,1,2 \ldots,N/2 - 2, N/2 - 1,N /2\).
+
+- `x2`: a logical vector of lenght N. Extract the carrier information out of the `flights` data for the rownumbers which can be found in `indx.flights`. For each element that has 'US','UA' or 'AA' as a carrier will obtain a `TRUE`, all others `FALSE`.
+
+- `x3`: a 'bad weather' indication variable. Draw \(N\) observations that come from an exponential distribution with a rate parameter equal to \(1/10\). Then, round these observations to the closest integer (use the functions `rexp` and `round`).
+
+- `e`: a vector of \(N\) elements that come from a standard normal i.i.d.
+
+- `y`: our own synthetic or simulated outcome variable representing arrival delay: \(y_i = 2 + 0.1*x_{i2} + 2*x_{i3} + 1*x_{i2}*x_{i3} + e_i\).
+
+
+
+```{r, label = vars, eval = TRUE}
+data.set$x1 <- abs((N/2):-(N/2))[-(N/2 + 1)]
+data.set$x2 <- flights$carrier[indx.flights]%in%c("AA","UA","US")
+data.set$x3 <- round(rexp(N, 1/10))
+data.set$e <- rnorm(N)
+data.set$y <- with(data.set, 2 + 0.1*x2 + 2*x3 + 1*x2*x3 + e)
+```
+
+
+
+
+
+
+
+
+
+
+### 3. Log-Likelihood Ratio Statistic.
+
+We have the folliwing linear regression model:
+
+\(y_i = \beta_0 + \beta_1*x_{i2} + \beta_2*x_{i3} + \beta_3*x_{i2}*x_{i3} + \epsilon_i = \hat{y}_i + \epsilon_i \).
+
+
+**3a.** We can obtain estimates of the values of the \(\beta\)'s and \(sigma\) using the function `lm()`;
+
+```{r label = rgr1}
+lm.rgr1 <- with(data.set, lm(y ~ x2*x3))
+paste0("hat.b",0:3, " = " , round(lm.rgr1$coef,2))
+sigma.h <- sd(lm.rgr1$residuals)
+paste0("sigma.h = ", round(sigma.h,2))
+```
+Using these estimates, what is the value of the log likelihood of our model? 
+
+Hint: use the function `sum` and know log-likelihood can be calculated as follows
+
+\[
+ \log \left( 
+ \prod^N_{i = 1} \frac{1}{\hat{\sigma} \sqrt{2 \pi}} \exp^{ 
+    -\frac{1}{2} \left( \frac{ y_i - \hat{y}_i) }{ \hat{\sigma} } \right)^2} 
+    \right)
+\]
+
+```{r, label = L_h1, eval = TRUE}
+L.h1 <- with(data.set, 
+             length(y) * log(1 / (sigma.h * sqrt(2*pi))) 
+             - sum((lm.rgr1$residuals)^2) / (2*sigma.h^2))
+```
+
+The value of the log-likelihood (\(l_1\)) of data set equals `r L.h1`.
+
+
+**3b.** Suppose we would like to add the x1 variable in our model as follows:
+
+\[y_i = \beta_0 + \beta_1*x_{i1} + \beta_2*x_{i2} + \beta_3*x_{i3} + \beta_4*x_{i2}*x_{i3} +\epsilon_i = \hat{y}_i + \epsilon_i \].
+
+Using the estimates from the following code chunk:
+
+```{r label = rgr2}
+lm.rgr2 <- with(data.set, lm(y ~ x1 + x2*x3))
+paste0("hat.b",0:4, " = " , round(lm.rgr2$coef,2))
+sigma.h <- sd(lm.rgr2$residuals)
+paste0("sigma.h = ", round(sigma.h,2))
+```
+
+What is the value of the log-likelihood?
+
+```{r, label = L_h2, eval = TRUE, tidy=TRUE}
+L.h2 <- (N * log(1 / (sigma.h * sqrt(2*pi))) 
+         - sum((lm.rgr2$residuals)^2) /(2*sigma.h^2))
+```
+
+**3c.** Calculate the log-likelihood ratio of our first model against the second model:
+
+```{r, label = LRT, eval = TRUE}
+LRT <- L.h1 / L.h2
+```
+
+When the log-likelihood ratio exceeds the value of \(\approx 3.84\), then we find a significant contribution for \(\alpha = 0.05\) for our extra `x1` variable. Here the value of the log-likelihood ratio equals `r round(LRT, 2)` and corresponds to a p-value of approximately `r round(pchisq(LRT, df = 1, lower.tail = FALSE), 4)`. Hence, as expected, adding the `x1` variable to the model does not improve model fit.

@@ -1,0 +1,255 @@
+---
+title: "Labmeeting on Animation"
+author: "Maarten Kampert"
+date: "18 Nov 2015"
+output: html_document
+---
+
+
+## 1. If you did not manage yet,  get the lecture slides to knit!
+
+## 2. Run the code given below in your console, and see what you are doing step by step.
+
+```{r, label = rgl_plot, eval = FALSE}
+library(rgl)
+
+wadr <- "http://pub.math.leidenuniv.nl/~kampertmmd/OPSdat/red.green.csv"
+redgreen <- read.csv(wadr)
+attach(redgreen)
+
+plot3d(c(-20, 45), c(-50, 80), c(0, 45), col = "white",
+    xlab = "", ylab = "", zlab = "",    
+    aspect = c(0.5, 1, 1.5), type = "n", lwd = 1, box = FALSE, axes = FALSE)
+lines3d(c(-20, 45, 45, -20, -20), c(-50, -50, 80, 80, -50), c(0, 0, 0, 0, 0))
+lines3d(c(-20, 45, 45, -20, -20), c(-50, -50, 80, 80, -50), c(45, 45, 45, 45, 45))
+lines3d(c(-20, -20), c(-50, -50), c(0, 45))
+lines3d(c(-20, -20), c(80, 80), c(0, 45))
+lines3d(c(45, 45), c(-50, -50), c(0, 45))
+lines3d(c(45, 45), c(80, 80), c(0, 45))
+
+
+userMatrixRG<- matrix( c( 
+    0.9, 0.45,0 , 0, 
+    0, 0, 1,  0, 
+    0.45, -0.9, 0, 0, 
+    0, 0, 0, 1),
+    4, 4, byrow = TRUE)
+
+
+par3d(userMatrix = userMatrixRG)
+ 
+plot3d(X, Y, T, type = "s", size = 1,col = Colour, add = TRUE)
+
+plot3d(X, Y, T, type="l", add = TRUE)
+
+play3d(spin3d())
+```
+To see for what purposes such code has been used, read from page 19 (Aim and Visualization) of the Statistical Science Master thesis of Helena van Eijk: http://www.math.leidenuniv.nl/scripties/MastervanEijk.pdf
+
+
+## 3. Let's animate! FFmpeg.
+
+With the help of an `FFmpeg` software program you can make your own videos in `R` using the `animate` package. In this exercise we hope to help you to make a video animation in R.
+
+**For Windows:**
+
+Download either the Static version of FFmpeg.exe in [64-bits](http://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-20151117-git-e9aea6d-win64-static.7z) or [32-bits](http://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-20151117-git-e9aea6d-win32-static.7z) from [ffmpeg.zeranoe.com/builds/#](ffmpeg.zeranoe.com/builds/#).
+
+Unzip the file and find the directory name in which the `ffmpeg.exe` is to be found. Make your own directory in which you have put the (or a copy of) the `ffmpeg.exe`, e.g. `C:\ffmpeg\bin`. Add this directory to yout path by opening cmd.exe, and type `set path=%PATH%;C:\ffmpeg\bin`. **BE VERY CAREFUL NOT TO ACCIDENTILY DELETE YOUR PATH.**
+
+Also take a look on [Stackoverflow](http://stackoverflow.com/questions/16481252/how-to-use-fig-show-animate-in-knitr-without-administrator-privileges) where Yihui refers you to [this website on how to set a PATH](http://www.computerhope.com/issues/ch000549.htm)
+
+
+**For Mac OS X:**
+
+Download FFmpeg for OS X from the following website: 
+
+http://www.osxexperts.net/ffmpeg/ffmpegexperts.html
+
+Run the downloaded `ffmpeg.....dmg` file, to create the FFmpeg file. Move or copy the FFmpeg file to the same directory as the directory in which you can find the .Rmd file with which you have knitted this .html file.
+
+```{r, eval = FALSE}
+if(Sys.which("ffmpeg") == ""){
+	Sys.setenv(
+	  PATH = paste(Sys.getenv("PATH"),getwd(),sep=":")
+	)
+}
+```
+
+Another and more permanent way would be to type or copy the following output to the code in your terminal on the mac:
+
+```{r}
+cat('sudo cp ', getwd(),'/ffmpeg /usr/local/bin/', sep = "")
+```
+
+**For Linux, Solaris:**
+
+Probably you can manage yourself without instructions. If not, contact Maarten for this assignment.
+
+
+
+**Make a clock**
+
+Reproduce the clock as is shown on 
+[stackoverflow](http://stackoverflow.com/questions/12038893/combining-r-markdown-and-animation-package)
+
+
+
+```{r clock, fig.width=7, fig.height=6, fig.show='animate', eval = FALSE}
+par(mar = rep(3, 4))
+for (i in seq(pi/2, -4/3 * pi, length = 12)) {
+    plot(0, 0, pch = 20, ann = FALSE, axes = FALSE)
+    arrows(0, 0, cos(i), sin(i))
+    axis(1, 0, "VI"); axis(2, 0, "IX")
+    axis(3, 0, "XII"); axis(4, 0, "III"); box()
+}
+```
+
+or try to reproduce your own video of Pacman.
+
+```{r}
+```
+
+
+## 3. Google Visualization.
+
+Try to reproduce the Google Visualizaton from the lecture slides about the members of the Statistical Society of the Netherlands.
+
+To do so you need to transform the data object `VVS` in the right format, first.
+
+```{r, echo = FALSE}
+a <- 56; b <- 13; ib <- rep(NA, 69- a-b)
+VVS <- list(
+  rnr = c(1:a, ib, (69-b + 1):69),
+	Year = 1947:2015,
+  # Exploitatie / Saldo  
+  Rslt = c(NA,-(420-235)/2.20371, 617.03/2.20371, 78.37/2.20371, -(437.17/2.20371), 
+           1517/2.20371, 2201.94/2.20371, 2276.81/2.20371, -3118.50/2.20371, NA,
+           (870.53 - 71.73)/2.20371, (1623.16-819.17)/2.20371, 3584.02/2.20371, -1922.61/2.20371, 
+           -(3816.39-357.12)/2.20371, -(4876.68)/2.20371, 2712.90/2.20371, -4814.39/2.20371, 
+           1349.65/2.20371, rep(NA, 6),  -7917.95/2.20371, -20413.31/2.20371, -15115/2.20371, 
+           30264/2.2037, 5958/2.20371, 19660/2.23071, 8154/2.20371, -4098/2.20371, 8088/2.20371, 
+           rep(NA,3), 23335.91/2.20371, 63737.45/2.20371, 41235.95/2.20371, -10566/2.20371, 
+           -60531/2.20371, -15845/2.20371, (7902)/2.20371, -9417/2.20371, 25982/2.20371, 
+           7071/2.20371, 7787/2.20371, -6641/2.20371, 5555/2.20371, -1340/2.20371, -27201/2.20371,
+           -6865/2.20371, 35227/2.20371, 4631, -6492, 561, -5101, -710, 11328, -8871, -7010, 72835, -17567, -23494,-7152, 5390, 13360, 
+           NA ),
+  # Nr of members	
+	N = c(NA, 166,182,210,268,300,386, 426, 460, 534, 625, 694,698, 718, 754, 788, 834, 878, 929, 937,
+        976, 1070, 1134, 1150, 1175, 1157, 1155, 1137, 1193, 1185, 1208, 1348, 1445, 1444, 1343,
+        1316, 1249, 1251, 1286, 1281, 1299, 1301, 1423, 1475, 1480, 1445, 1430, 1402, 1391, 1354,
+        1318, 1289, 1279, 1230, 1161, 1146, 1099, 1025,966,907,856,832,796,769,765,790,865,880,877),
+#  / No section
+#  n.NO = c(rep(NA, 12), 96, 95, 86, 77, rep(NA, 40), rep(NA, b) ),
+#  / Bedrijfssectie
+ 	INDS = c(NA, NA,38,54,75,86,138,148, 160, 185,273, 313, 313, 312, 317, 324, 331, 360
+            , 367, 370, 368, 342, 330, 330, 317, 280, 265, 270, 264, 230, 222, 212, 211,
+            199, 184, 176, 162, 161, 154, 149, 153, 165, 198, 195, 216, 278, 291, 288, 279, 
+            276, 280, 265, 265, 250, 231, 217, 204, 188, 169, 159, 152, 156, 135, 128, 117,
+            107, 106, 100, NA),
+# IS,MBS,MATH,OFF,SOC,ES,OR,AGR,SSP
+#  / Medisch Biologische sectie / BIOSetric Section
+	BIOS = c(rep(NA, 6), 63, 65, NA, NA,NA,NA, 122, 109, 121, 126, 132, 123, 157, 158,
+            156, 165, 160, 163, 159, 148, 140, 146, 150, 137, 135, 133, 131, 141, 143,
+            134, 138, 148, 141, 148, 150, 159, 179, 184, 181, 276, 296, 300, 298, 303,
+    # called the BIOSetric section...
+            366, 359, 357, 351, 333, 328, 325, 309, 287, 276, 262, 262, 243, 222, 225, 
+    228, 235, 227, 227),
+# / Sectie Beschrijvende (official stat.) statistiek / van 1964: SWS? / 
+  OFFS = c(rep(NA, 6), 74, 77, 73, NA, NA, NA, 96, 96, 100, 102, 104, 99, rep(NA, 51)),
+# / Sectie Mathematische Statistiek
+	MATH = c(rep(NA, 6),69,73, NA,NA, NA,NA, 139, 136, 140, 150, 166, 158, 171, 188,
+           201, 219, 241, 254, 277, 307, 320, 338, 354, 354, 381, 400, 415, 406, 408,
+           399, 376, 366, 351, 346, 349, 331, 359, 355, 377, 441, 451, 452, 452, 428,
+           415, 401, 370, 356, 340, 342, 331, 309, 295, 271, 265, 265, 244, 218, 227, 226, 
+           232, 226, 237),
+# / Sectie Economische Statistiek
+	ECNS = c(rep(NaN, 9),NA,57,123, 177, 184, 200, 211, 232, 247, 262, 264, 253, 244,
+           250, 247, 248, 247, 239, 252, 258, 231, 236, 236, 236, 226, 221, 217, 193, 
+           183, 173, 169, 170, 173, 199, 192, 197, 269, 270, 270, 266, 254, 251, 240,
+           240, 223, 212, 203, 187, 172, 157, 146, 140, 144, 128, 124, 117, 110,111, 104, 
+           93),
+# / Sectie Operational (Operations) Research / 97. NGB
+  OPRS = c(rep(NaN, 12), 91, 97, 115, 151, 161, 194, 256, 277, 282, 292, 316, 335, 386,
+           414, 433, 458, 471, 455, 460, 467, 536, 509, 445, 439, 411, 405, 380, 366, 375,
+           369, 426, 433, 457, 528, 510, 503, 493, 477, 462, 456, 438, 404, 371, 374, 349,
+           316, 289, 279, 265, 283, 273, 240, 244, 253, 261, 299, 269),
+# Landbouwkundige Sectie
+  AGRI = c(rep(NaN, 16), 15, 19, 31, 33, 46, 50, 56, 61, 62, 59, 60, 62, 60, 64, 66,
+           64, 68, 68, 71, 68, 66, 67, 56, 56, 63, 67, 76, 75, 80, 178, 191, 190, 189,
+           188, rep(NA,6), rep(NA, b) ),
+  SOCS = c(rep(NA, 6 + 12), #SWS begins....
+         83, 116,
+         121, 120, 112, 108, 109, 103, 97, 102, 112, 110, 124, 278, 334, 355, 320,
+         321, 303, 281, 256, 252, 249, 251, 280, 277, 283, 371, 375, 375, 376, 368,
+         364, 351, 346, 343, 337, 325, 321, 286, 268, 253, 240, 229, 211, 184, 194, 
+         201, 222, 215, 208),
+# Sectie Statistische Programmatuur (1982 for real, in 1968 werkgroep/contactgroep Statistiek en Computer)
+  SSFP = c(rep(NaN, 36), 86, 105, 127, 138, 153, 182, 217, 229, 227, 313, 323, 320, 319, 309,
+           301, 288, 273, 261, 243, 231, 220, 202, 186, 163, 155, 148, 136, rep(NA, 6) )
+)
+```
+
+```{r}
+VVS <- as.data.frame(VVS)
+str(VVS)
+```
+
+To obtain a nice plot of the membership data, we need to transform the wide format `VVS` data into a long format. More precise, the head of our new object `VVSlf` needs to look like this:
+
+```
+      Year       Rslt   N nsect sect
+INDS1 1947         NA  NA    NA INDS
+INDS2 1948  -83.94934 166    NA INDS
+INDS3 1949  279.99601 182    38 INDS
+INDS4 1950   35.56276 210    54 INDS
+INDS5 1951 -198.37910 268    75 INDS
+INDS6 1952  688.38459 300    86 INDS
+```
+
+and the tail like this:
+
+```
+      Year   Rslt   N nsect sect
+SSFP64 2010 -17567 769    NA SSFP
+SSFP65 2011 -23494 765    NA SSFP
+SSFP66 2012  -7152 790    NA SSFP
+SSFP67 2013   5390 865    NA SSFP
+SSFP68 2014  13360 880    NA SSFP
+SSFP69 2015     NA 877    NA SSFP
+```
+
+The number of rows should equal 9 times `nrow(VVS)`. For the year for which there is no `nsect` information available, fill out NA.
+
+
+**Answer**
+
+Let's first see whether we can make the data set for the INDS section only. Our code would then be something like this:
+
+```{r, eval = FALSE}
+VVS[, c(colnames(VVS)[1:4], "INDS")]
+```
+
+
+Let us make the real data set now:
+
+```{r, eval = TRUE}
+nr.sects <- length(colnames(VVS)[-c(1:4)])
+VVSlf <- data.frame(
+  Year = rep(VVS$Year, times = nr.sects),
+  Rslt = rep(VVS$Rslt, times = nr.sects),
+  N = rep(VVS$N, times = nr.sects),
+  nsect = unlist(c(VVS[,-c(1:4)])),
+  sect = factor(rep(names(c(VVS[,-c(1:4)])), each = nrow(VVS)))
+  )
+rm(nr.sects) # clean up
+```
+
+
+Eventually use the following command, as was used in the lecture slides.
+```{r, eval = FALSE}
+library(googleVis)
+M1 <- gvisMotionChart(VVSlf, idvar = "SECT", timevar = "Year")
+plot(M1)
+```
+

@@ -1,0 +1,284 @@
+---
+title: "Solutions Labmeeting week 2"
+date: "5 Nov 2015"
+output: pdf_document
+---
+<!-- 
+
+-->
+
+#Exercises
+
+1. *Exercise with vectors and vectorized functions:*
+a. Create the vector "varname" which has the following elements:
+
+    "A_1"  "A_2"  "A_3"  "A_4"  "A_5"  "A_6"  "A_7"  "A_8"  "A_9"  "A_10"
+
+b. Given two vectors:
+```{r}
+x <- c(5, 2, 10, 4) 
+y <- c(3, 6, 3, 10)
+```
+Using one (or some) of the operators &, &&, |, ||, >, any(), all(), and write R code to test if:
+
+- elements in vector x are greater than elements in vector y;
+- elements in vectors x AND y are greater than 3;
+- elements in vectors x OR y are greater than 3;
+- all elements of vector x AND all elements of vector y are greater than 2;
+- all elements of vector x OR all elements of vector y are greater than 2;
+- there are any elements in vectors x or y that are greater than 9;
+- the first element of vector x AND the first element of vector y are greater than 2.
+
+c. Inspect the solutions you obtained in b. Which operations are vectorized and which operations are not vectorized? Why?
+
+*Solution 1a*
+```{r, label = sol_1a}
+varname <- paste("A", 1:10, sep = "_")
+varname
+```
+*Solution 1b*
+```{r, label = sol_1b}
+x <- c(5, 2, 10, 4)
+y <- c(3, 6, 3, 10)
+x > y
+x > 3 & y > 3
+x > 3 | y > 3
+all(x > 2) && all(y > 2)
+all(x > 2) || all(y > 2)
+any(x > 9 | y > 9)
+x > 2 && y > 2
+```
+
+*Solution 1c*
+Last four operations are not vectorized. As a result, just one answer is given ("FALSE" or "TRUE"). The operators && and || are used for scalars. If you use x > 2 && y > 2 only the first element of vector x and the first element of vector y are evaluated.
+
+2. *Exercise on matrix indexing*
+a. Work through the extended example in 3.2.3 (from p. 63) about an image of Mount Rushmore (maybe you remember this statue from the Hithcock film North by Northwest). You can find the image file ("mtrush1.pgm") on Blackboard > Course documents > week2. You can find the function blurpart below (this is the corrected version of the downloaded code from the book).
+```{r, label=functionbp}
+blurpart <- function(img, rows, cols, q) {
+  lrows <- length(rows)
+  lcols <- length(cols)
+  newimg <- img
+  randomnoise <- matrix(nrow = lrows, ncol = lcols, runif(lrows * lcols))
+  newimg@grey[rows, cols] <- (1 - q) * img@grey[rows, cols] + q * randomnoise
+  return(newimg)
+}
+```
+
+Plot the objects mtrush1, mtrush2, and mtrush3.
+
+b. Create object mtrush4 using a different value of "q". What happens if q is close to 0? and if q is close to 1?
+c. Now we want to keep President Roosevelt, but disguise the person on the left of the figure (Hint: the index of the rows equals 25:86; the index of the columns starts at 15). Construct the object (using the function blurpart) and plot it.
+
+*Solution 2a*
+```{r, label = sol_2a}
+if (!require(pixmap)){
+install.packages("pixmap")
+library(pixmap)
+}
+mtrush1 <- read.pnm("mtrush1.pgm")
+plot(mtrush1)
+mtrush2 <- mtrush1
+rowindex <- 84:163 
+colindex <- 135:177
+mtrush2@grey[rowindex, colindex] <- 1
+plot(mtrush2)
+mtrush3 <- blurpart(mtrush1, rowindex, colindex, 0.65)
+plot(mtrush3)
+```
+
+*Solution 2b*
+
+```{r, label = sol_2b} 
+mtrush4a <- blurpart(mtrush1, rowindex, colindex, 0.90)
+mtrush4b <- blurpart(mtrush1, rowindex, colindex, 0.10)
+plot(mtrush4a) #high value of q is much random noise
+plot(mtrush4b) #low value of q is little random noise
+```
+
+*Solution 2c*
+```{r, label = sol_2c}
+rowindex <- 25:86 
+colindex <- 15:70
+mtrush5 <- blurpart(mtrush1, rowindex, colindex, 0.90)
+plot(mtrush5)
+```
+
+3. *Exercise with generating random normally distributed vectors and applying functions to rows and columns of a matrix*
+
+Let matrix $\mathbf{X}$ be a matrix of 4 normally distributed random variables with $\mu= 1$, $\sigma^2=3$, and number of observations ($N$) equals 5000.
+Below, we show three ways to generate $\bf{X}$, the generated matrices are denoted with $\mathbf{X_1, X_2}$, and $\mathbf{X_3}$, respectively. 
+
+```{r, label = rnormgen}
+set.seed(123)
+X1 <- cbind(rnorm(n = 5000, mean = 1, sd = sqrt(3)), rnorm(n = 5000, mean = 1, sd = sqrt(3)),
+            rnorm(n = 5000, mean = 1, sd = sqrt(3)), rnorm(n = 5000, mean = 1, sd = sqrt(3))) 
+
+set.seed(123)
+X2 <-matrix(rep(rnorm(n = 5000, mean = 1, sd = sqrt(3)), times = 4), nrow = 5000)
+
+set.seed(123)
+nsamples <- 4
+X3 <- matrix(rnorm(n = 5000 * nsamples, mean = 1, sd = sqrt(3)), nrow = 5000)
+```
+
+a. Compare the column means and variances of the three matrices  $(\mathbf{X_1,X_2,X_3})$. Which two matrices have the same solution? Which matrix is not a matrix with four random variables? Which solution do you prefer and why?
+
+b. From matrix $\mathbf{X_3}$, create a new matrix $\mathbf{X_4}$ that contains only the rows of $\mathbf{X_3}$ for which at least 2 out of the 4 values are greater than 1. Give the dimensions of $\mathbf{X_4}$. (hint: remember that a logical vector can be converted to numeric vector where FALSE takes the value 0, and TRUE the value 1).
+
+c. Create a new matrix $\mathbf{X_5}$ that is based on $\mathbf{X_3}$, where each column of $\mathbf{X_3}$ is standardized (i.e.,column mean equals 0 and standard deviation equals 1).
+
+d. Show that $\mathbf{X_5}'\mathbf{X_5}/(N-1)$ equals the correlation matrix of $\mathbf{X_3}$ that you can obtain in R with cor(X3).
+
+
+
+*Solution 3a*
+```{r, label = sol_3a}
+apply(X1, 2, mean) # or use colMeans(X1)
+apply(X2, 2, mean) 
+apply(X3, 2, mean) 
+apply(X1, 2, var)
+apply(X2, 2, var)
+apply(X3, 2, var)
+```
+X1 and X3 give the same solution. X2 is wrong, it copies ( = rep()) the original random sample 4 times. X3 is to be preferred (efficient coding; can easily be generalized to more columns).
+
+*Solution 3b*
+```{r, label = sol_3b}
+index <- rowSums(X3 > 1) >= 2
+X4 <- X3[index, ]
+dim(X4)
+```
+
+*Solution 3c*
+```{r, label = sol_3c}
+Standardize <- function(x){
+  (x - mean(x)) / sd(x)
+  }
+X5 <- apply(X3, 2, Standardize)
+apply(X5, 2, mean) 
+apply(X5, 2, var)
+```
+
+*Solution 3d*
+```{r, label = sol_3d}
+t(X5) %*% X5 / (dim(X5)[1] - 1)
+cor(X3)
+```
+
+
+4.  *Exercise with applying a function to rows or columns of a matrix*
+
+We have the following matrix:
+
+```{r, label = create_mat}
+mat <- matrix(c(rep(2, 3), rep(3, 2), 2, 3:1, rep(0, 3)), nrow = 4)
+mat
+```
+
+and the following character vector:
+```{r, label = create_strg}
+strg <- c("A" ,"C", "G", "I")
+strg
+```
+
+The values in matrix mat correspond to the characters of the vector strg in the following way: the value 0 corresponds to A (African), the value 1 corresponds to C (Chinese), the value 2 corresponds to G (German), and the value 3 corresponds to I (Italian). 
+
+a. Write a piece of R code that converts each value of mat into the corresponding character of strg. Check the mode of the matrix.
+
+b. Write a piece of R code to perform the following operation: Concatenate (without spaces in between) A, C, G, I according to the values in each row of mat, in such a way that the output is the following:
+
+[1] "GIC" "GGA" "GIA" "IGA"
+
+c. Write a function that concatenates A, C, G, I according to the values in the row of a general input matrix mat having elements in (0; 1; 2; 3). Check with an example if your function performs well.
+
+
+*Solution 4 a* 
+
+First we try out a solution for the first column of mat:
+```{r, label = sol_4a1}
+x <- mat[, 1]
+strg[x + 1]
+```
+
+Now we use this solution to apply it to all columns of mat: 
+```{r, label = sol_4a2}
+matnew <- apply(mat, 2, function(x){
+  strg[x + 1]
+  })
+matnew
+mode(matnew)
+```
+
+
+*Solution 4 b* 
+
+First we try out a solution for the first row of mat:
+```{r, label = sol_4b1}
+x <- mat[1, ]
+strg[x + 1]
+paste(strg[x + 1], collapse = "")
+```
+
+Now we use this solution to apply it to all rows of mat: 
+```{r, label = sol_4b2}
+out <- apply(mat, 1, function(x){
+  paste(strg[x + 1], collapse = "")
+  })
+out
+```
+
+*Solution 4 c* 
+```{r, label = sol_4c}
+convert <- function(mat){
+  strg <- c("A" ,"C", "G", "I")
+  out <- apply(mat, 1, function(x){
+    paste(strg[x + 1], collapse = "")
+    })
+  return(out)
+  }
+mat2 <- matrix(c(0:3, 3:0), nrow = 2, byrow = TRUE)
+mat2
+convert(mat2)
+```
+
+5. *Exercise with list indexing and adding list elements*
+
+Read example 4.2.4 (from p. 90) and try to understand the function "findwords" (which is given below). Perform the function step by step, using the text file "testconcorda.txt", which you can find on Blackboard > Course documents > Week 2. Finally, create an object "wl", using the function "findwords" with "testconcorda.txt" as input. Inspect the class of wl and ask for the component "that".
+
+```{r, label = functionfw}
+findwords <- function(tf) {
+   # read in the words from the file, into a vector of mode character
+   txt <- scan(tf, "")  
+   wl <- list()  
+   for (i in 1:length(txt)) {
+      wrd <- txt[i]  # i-th word in input file
+      wl[[wrd]] <- c(wl[[wrd]], i)  
+   }  
+   return(wl)
+}
+```
+
+*Solution 5*
+```{r, label = sol_5}
+txt <- scan("testconcorda.txt", "")
+txt
+wl <- list() 
+wl 
+i <- 1
+wrd <- txt[i] 
+wrd
+wl[[wrd]] <- c(wl[[wrd]], i)
+wl[[wrd]]
+i <- 5
+wrd <- txt[i]
+wrd
+wl[[wrd]] <- c(wl[[wrd]], i)
+wl[[wrd]]
+wl <- findwords("testconcorda.txt")
+wl[["that"]]
+```
+
+6. *Exercise with applying a function to a list*
+
+Open package swirl with library(swirl) and perform the lessons of R programming on lapply and sapply.

@@ -1,0 +1,913 @@
+---
+title: "Lecture  SCR"
+subtitle: Performance enhancement & Debugging
+output:
+  ioslides_presentation:
+    keep_md: yes
+mode: standalone
+
+---
+
+
+```{r, label = preps1, include = FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+```
+
+
+##Recap of Week 5
+
+```{r, echo = FALSE}
+x <- seq(0,12, length.out = 100)
+df <- 3
+y <- dchisq(x, df = df)
+plot(y, x = x, type = "l", col = 'red', lwd = 2, main = 'Chisq (df = 3): p?, q?, d?, r?')
+segments(x0 = df, y0 = 0, y1 = dchisq(df, df = df), lty = 2)
+```
+
+##Recap of Week 5
+
+[Sampling and Resampling Methods](http://en.wikipedia.org/wiki/Resampling_statistics)
+
+<img src= "http://www.pix123.com/bettingpro/casinoimages/screenshot/4833_montecarlo1.jpg" alt = "Drawing" width="75%" height="75%">
+
+
+## Course Strategy
+
+```{r, eval = FALSE}
+time.inp <- '11.5 hours a week'
+strat.inp <- "Working strategy Week 3"
+Result <- learn(strat = strat.inp, time = time.inp)
+print(Result)
+```
+
+```
+[1] "Congrats! You'll pass this course!!"
+```
+
+For real:    
+- Repeat
+- Practice, repeat
+- Repeat, practice, repeat...   
+
+
+## Working Strategy
+
+- Translate problem into little steps (sometimes without overview); 
+
+- Hence, what can you do; Program what you can program first (vectorize later...)
+
+- Help: trial error -> helpfile -> examples -> www
+
+
+## Pareto Principle
+
+80% of your developed R skills come from 20% of your time spent.
+
+<div class="centered">
+<img src="https://www.dropbox.com/s/irxo2wgmhhqrhge/TheShowTheRehearsel.jpg?dl=1" alt = "ParetoPrinciple" width="50%" height="50%">
+</div>
+
+#Topics of week 6 | Efficient Code (Ch14), Debugging (Ch13)
+
+
+##Week  learning objectives
+
+- see the power of vectorization (native machine code)
+- name the advantages of programming code into functions is convenient
+- how to profile code: use the function `system.time()` and `replicate()`, or `Rprof()` and `summaryRprof()` to check speed of code.
+- get a hold on four different types of possible errors in code
+- learn three different debugging strategies (manual, help, `debug()` and related functions)
+
+
+# Efficient Code
+
+>  We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil.
+
+-- Donald Knuth
+
+
+## Why speed up? 
+
+Often code runs fine once, but what if you have to use your code many many times
+
+and
+
+... you only have your laptop as computing power   
+
+... you'll have to pay for computing time   
+
+
+or you'd like others to see using your code.
+
+
+## Why speed up? 
+
+![oldtimes](http://www.globalnerdy.com/wordpress/wp-content/uploads/2013/04/elliott-electronic-computer.jpg)
+
+
+
+## Outline of this morning
+
+- The Power of Vectorization (14.1-3)   
+     + `sytem.time()` + `replicate()`
+     + `for(){}` vs. `(s,l)apply` vs. `vectorization`
+- Byte Code Compilation (14.5)   
+- Profiling using `Rprof()` (14.4) <- could be afternoon...
+
+Not prominent in the course: memory management
+
+
+
+## Code optimization principles:
+
+- Design first, then optimize
+
+- Remember: Premature optimization is the root of all evil
+
+- Measure (collect data), don't guess for optimization
+
+
+If you're going to be a scientist, you need to apply the same principles here.
+
+Also take into account the Pareto Principle.
+
+
+# Vectorization 
+
+
+## Using `system.time({ ... })`
+
+- Takes an arbitrary R expression as input (can be wrapped in curly braces) and returns the amount of time (in seconds) taken to evaluate the expression
+
+- Returns an object of class `proc_time', in following way:   
+     + **user**: time charged directly related to execution of the code.    
+     + **system**: extra time your CPU(s) need (e.g. waiting)
+     + **elapsed**: stopwach time, time needed from beginning on to end ("wall clock" time)
+
+
+## Why add `replicate()`?
+
+The `system.time()` results can be highly variable. Many times you see `replicate()` being added: a wrapper of `sapply` used for repeated evaluation of an expression.
+
+```{r}
+x1 <- replicate(5, rep(1,3))
+x2 <- sapply(integer(5), function(x) rep(1,3))
+all.equal(x1,x2)
+```
+
+See for yourself: look at the source of replicate.
+
+
+## `[s/l]apply` vs `for loop'
+
+Let's begin using `system.time()` and `replicate()`
+
+```{r, label = sapply1, eval = TRUE}
+system.time(replicate(100, obj <- sapply(1:1000, function(x) x + 1)))
+```
+
+```{r, label = lapply1, eval = TRUE}
+system.time(replicate(100, obj <- lapply(1:1000, function(x) x + 1)))
+```
+
+
+## `[s/l]apply` vs `for loop'
+
+```{r, label = lapply2, eval = TRUE}
+system.time(replicate(100, obj <- lapply(1:1000, function(x) x + 1)))
+```
+
+```{r, label = forloop1,eval = TRUE}
+system.time(replicate(100, {
+  obj <- numeric(1e3)
+  obj <- for(x in 1:1000){ x + 1} 
+  }))
+```
+
+
+## Remember vectorization:
+
+```{r, label = forloop2,eval = TRUE}
+system.time(replicate(100, {
+  obj <- numeric(1e3)
+  obj <- for(x in 1:1000){ x + 1} 
+  }))
+```
+
+```{r, label = vectorization,eval = TRUE}
+system.time(replicate(100, obj <- 1:1000 + 1 ))
+```
+
+
+## Bootstrapping with sapply?
+
+Code of last week:
+
+```{r, tidy = TRUE}
+N <- nrow(cars); B <- 100; set.seed(123)
+index <- matrix(sample(1:N, B*N, replace = TRUE), nrow = N );
+```
+
+
+## Bootstrapping with sapply?
+
+```{r, tidy = TRUE}
+system.time(
+  sapply(index, function(x) cor(cars$speed[x], cars$dist[x]))
+  )
+system.time({cors <- numeric(ncol(index)); 
+  for(i in 1:ncol(index)) {
+    cors[i] <- cor(cars$speed[x], cars$dist[x])
+    }
+})
+```
+
+
+
+
+## Norman Matloff
+
+> ``The moral of the story is that performance issues can be unpredictable. All you can do is be armed with an understanding of the basic issues, vectorization, and the memory aspects explained next and then try various approaches.''
+
+![](http://sciencecareers.sciencemag.org/sites/default/files/article_images/Benderly_TFG_20100709_NormMatloff_200x250_3.jpg)
+
+
+## `for loop`: Three Remarks
+
+1. Avoid growing objects! 
+
+2. *Rather use the implicit loops* `lapply`*, and* `sapply`
+
+     - what stays in the function.... so no bookkeeping (remember residual objects, e.g. `i`)   
+     - but, apparently, not necessarily faster code...   
+     
+     - `apply` might slow things down too much.   
+     
+3. "Vectorization beats all"
+
+Remember from week 3: [Discussion Stackoverflow](http://stackoverflow.com/questions/5533246/why-is-apply-method-slower-than-a-for-loop-in-r)  
+
+
+## The `for loop` on Twitter
+
+> "I'm just going to say it.  I like for loops in #Rstats, makes my code readable.  All you [a-z]*ply snobs can shove it!"
+
+[Ted Hart](https://twitter.com/emhrt_/status/311581025870426113)
+
+
+## Vectorization, Why?
+
+Based on functions using code closer to native machine code...
+
+![](http://transmissionsmedia.com/wp-content/uploads/2013/01/206868-binary-code-hacking.jpg)
+
+
+## Recap so far
+
+- `system.time()` and `replicate()`
+
+- Nuance on three `for loop` remarks
+
+- Vectorization
+
+
+
+# Byte Code Compilation 
+
+
+## Vectorization
+
+Use code closer to native machine language.
+
+![](http://transmissionsmedia.com/wp-content/uploads/2013/01/206868-binary-code-hacking.jpg)
+
+
+
+## Trick: Compile your own function 
+
+into a binary executable function...
+
+```{r, eval = FALSE, tidy = TRUE}
+library(compiler)
+f <- function(...){..}
+cf <- cmpfun(f)
+system.time(f("let's run"))
+system.time(cf("let's run"))
+```
+
+- Works well on your own created 'numerical manipulation' functions (e.g. gradient descent)
+- Does not work well when on already pre-compiled functions (e.g. `lapply`, `sapply`)
+
+
+## Translate your code in functions
+
+Even better, store them into an R script file.
+
+E.g. if you have multiple linese of code:
+
+```{r, eval = FALSE}
+system.time({line1; line2; ...; line n})
+```
+
+versus
+
+```{r, eval = FALSE}
+source("functionfile_f.R")
+system.time(f('inputarguments'))
+```
+
+
+# Profiling using `Rprof()`
+
+> Enable or disable profiling of the execution of R expressions.
+
+
+
+## Why Profiling? | Measure (collect data) don't guess
+
+
+> **Profiling**: the recording and analysis of .... speed of code
+
+
+Why profiling?   
+
+Because... getting biggest impact on speeding up code depends on knowing where the code spends most of its time.
+
+
+
+## The R profiler
+
+In case you don't know where to start to speed up your code.
+
+The `Rprof()` keeps track of the function *call stack* at regular sampled intervals and tabulates how much time is spend in each function.
+
+Call Stack: 
+
+*call stack* is the list of the current function running, and the function that called it, and the function that called that one,    
+
+and so on...
+
+
+## Every operation is a function call
+
+To understand computations in R, two slogans are helpful:   
+
+- Everything that exists is an object.   
+- Everything that happens is a function call.
+
+-- John Chambers
+
+
+
+## The R profiler
+
+In case you don't know where to start to speed up your code.
+
+The `Rprof()` keeps track of the function *call stack* at regular sampled intervals and tabulates how much time is spend in each function.
+
+
+
+# Morning Labmeeting
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# `Rprof()`, Errors and Debugging
+
+
+## Recap
+
+Efficient code: 
+
+- `system.time()` and `replicate()`      
+- `for loop`, `lapply`, `sapply`, vectorization   
+- byte compilation   
+- program chunks into functions   
+- profiling  
+
+## Afternoon: `Rprof()`, Errors and Debugging
+
+- `Rprof()`
+- Identify a bug (13.1, 13.6)   
+- Debugging Tools in R (13.2 - 13.3) 
+    + using `debug()` `and browser()`
+
+Not part of the course: 13.4, 13.7.
+
+
+## The R profiler
+
+In case you don't know where to start to speed up your code.
+
+The `Rprof()` keeps track of the function *call stack* at regular sampled intervals and tabulates how much time is spend in each function.
+
+
+## `flgfsap` example
+```{r, eval = TRUE, echo = FALSE, message = FALSE}
+cat('flgfsap <- LargestSharedArgumentsGroup <- function(package, exclude = NULL){
+  # Find largest group of functions that share the same arguments
+  #
+  # Args:
+  #   package = name of package as character
+  #   exclude = character vector with function names 
+  #     to be excluded
+  #   DF = whether the also a Data.frame with the 
+  #     functions and argumenst should be returned
+  #
+  # Returns: 
+  #   A list with the 
+  #     ... $ Group: the function names of the largest group
+  #     ... $ Args: the arguments this function group shares
+  #     ... $ DF: a data frame with as first variable the function names,
+  #               the remaining variables represent arguments in the package.
+  #
+  #
+  
+  # retrieve functions
+  functs <- lsf.str("package:stats")
+  functs <- setdiff(functs, exclude)
+  
+  # retrieve all arguments of the functions
+  pack.args <- numeric()
+  for (fnct in functs){
+    pack.args <- unique(c(pack.args, names(formals(fnct))))
+  }
+  
+  # Make a data.frame
+  pack.mat <- matrix(0, nrow = length(functs), ncol = length(pack.args))
+  for(fnct in functs){
+    i <- which(functs%in%fnct)
+    pack.mat[i,] <- pack.args%in%names(formals(fnct))
+  }
+  colnames(pack.mat) <- pack.args
+  pack.df <- data.frame(Function = functs[1:length(functs)], pack.mat)
+  
+  # find the largest group
+  groups <- vector("list", nrow(pack.df))
+  tmp.df <- as.matrix(pack.df[,-1], drop = FALSE)
+    
+  for(i in 1:nrow(pack.df)){
+    row <- tmp.df[i, , drop=T]
+    groups[[i]] <- which(apply(tmp.df, 1, function(x){
+      all(x == row)}
+      ))
+  }
+  
+  groups <- unique(groups)
+
+  # retrieve function names of largest group
+  FNCTS <- functs[ unlist(groups[which.max(sapply(groups, length))] )  ]
+  # retrieve the arguments
+  ARGS <- pack.args[tmp.df[pack.df$Function == FNCTS[1],] == 1]
+  
+  return( list(Group = FNCTS, Args = ARGS , DF = pack.df) )
+}
+', file = 'flgfsap.R')
+source('flgfsap.R')
+```
+
+```{r, label = flgfsa}
+args(flgfsap)
+```
+
+This function    
+- (**f**) Finds the  
+- (**l**) Largest    
+- (**g**) Group   
+- (**f**) of Functions   
+- (**s**) that Share their    
+- (**a**) Arguments   
+- (**p**) in a Package   
+
+
+## `flgfsap` example
+
+The `flgfsap` function outputs a list:
+
+- `.. $ Group` a character vector which contains the function names of this largest group,   
+- `.. $ Args` a character vector containing the arguments   
+- `.. $ DF` a data frame with in the rows the function and in the columns function arguments
+
+
+## How to use Rprof(): `flgfsap`
+
+Typical code we like to use in the course:
+
+```{r, eval = FALSE}
+source('flgfsap.R') # load the function
+Rprof(filename = 'exampleRprof.out',  line.profiling = TRUE)
+invisible(flgfsap(package = 'stats', exclude = 'p.adjust.methods'))
+Rprof(NULL) # close profiler 
+obj.prof <- summaryRprof(filename = 'exampleRprof.out', lines = 'both')
+```
+
+## `summaryRprof()`
+
+```{r, eval = FALSE}
+str(obj.prof)
+```
+```
+## List of 4
+##  $ by.self        :'data.frame':  15 obs. of  4 variables:
+##   ..$ self.time : num [1:15] 3.66 3.26 0.48 0.22 0.08 0.06 0.06 0.04 0.04 0.04 ...
+##   ..$ self.pct  : num [1:15] 45.52 40.55 5.97 2.74 1 ...
+##   ..$ total.time: num [1:15] 4.22 3.26 0.48 7.9 0.08 0.12 0.06 3.3 0.04 0.04 ...
+##   ..$ total.pct : num [1:15] 52.49 40.55 5.97 98.26 1 ...
+##  $ by.total       :'data.frame':	27 obs. of  4 variables:
+##   ..$ total.time: num [1:27] 8.04 7.92 7.9 7.9 4.34 4.22 3.3 3.26 0.48 0.12 ...
+##   ..$ total.pct : num [1:27] 100 98.5 98.3 98.3 54 ...
+##   ..$ self.time : num [1:27] 0 0 0.22 0 0.02 3.66 0.04 3.26 0.48 0.06 ...
+##   ..$ self.pct  : num [1:27] 0 0 2.74 0 0.25 ...
+##  $ sample.interval: num 0.02
+##  $ sampling.time  : num 8.04
+```
+
+## `summaryRprof()`
+
+The `summaryRprof()` function tabulates the R profiler output and calculates how much time is spend in which function(s).
+
+There are two methods for normalizing data:
+
+- `by.total` divides the time spend in each function by the total run time
+- `by.self` does the same but first substracts out time spent in functions above in the call stack
+
+
+## What is this `exampleRprof.out` ?
+
+File used for recording the profiling results.
+
+```{r, eval = FALSE}
+head(matrix(readLines('exampleRprof.out'), ncol = 1), 3)
+```
+```
+###     [,1]                                      
+### [1,] "line profiling: sample.interval=20000"   
+### [2,] "#File 1: flgfsap.R"                      
+### [3,] "\"formals\" \"unique\" 1#27 \"flgfsap\" "
+```
+```{r, eval = FALSE}
+tail(matrix(readLines('exampleRprof.out'), ncol = 1), 3)
+```
+```
+##      [,1]                                                     
+## [402,] "1#46 \"FUN\" 1#45 \"apply\" \"which\" 1#45 \"flgfsap\" "
+## [403,] "1#46 \"FUN\" 1#45 \"apply\" \"which\" 1#45 \"flgfsap\" "
+## [404,] "1#46 \"FUN\" 1#45 \"apply\" \"which\" 1#45 \"flgfsap\" "
+```
+
+
+## `Rprof()` Summary
+
+- `Rprof()` runs the profiler for performance of analysis of R code
+
+- `summaryRprof()` summarizes the output of Rprof() and gives percent of time spent in each function (with two types of normalization)
+
+- Good to break your code into functions so that the profiler can give useful information about where time is being spent
+
+- C or Fortran code is not profiled
+
+
+# Ending efficient coding
+
+
+## Summary of efficient coding:
+
+Trade-off in programming:
+
+- !Readability  
+
+- Efficient code
+
+- Time   
+
+- Elegance  
+
+
+More interesting info: [Noam Ross' blog](http://www.noamross.net/blog/2013/4/25/faster-talk.html)
+
+
+
+
+# Identify a bug (Errors)
+
+
+
+## Something's Wrong
+
+Indications that something's not right?
+
+- `message`: A generic notification/diagnostic message produced by the message function; execution of the function continues.
+
+- `warning`: An indication that something is wrong but not necessarily fatal; execution of the function continues' generated by the `warning` function.
+
+- `error`: An indication that a fatal problem has occured; execution stops; produces by the `stop` function. There are three types of errors: syntax, logical or runtime related.
+
+
+## Something's Wrong | heed warnings
+
+```{r}
+log(-1)
+```
+
+Recognize this message?
+
+`There were 50 or more warnings (use warnings() to see the first 50)`
+
+
+## Something's Wrong
+
+```{r}
+printmessage <- function(x){
+  if(x > 0){
+    print("x is greater than zero")
+  } else {
+      print("x is less than or equal to zero")
+  }
+}
+```  
+
+message:
+```{r}
+printmessage(8)
+```
+
+
+
+## Something's Wrong 
+
+What kind of error?
+
+```{r, eval = FALSE}
+printmessage(NA)
+```
+```
+Error in if (x > 0) { : missing value where TRUE/FALSE needed
+```
+<!-- put in red color -->
+
+
+Solution? Add a `condition`: A generic concept for indicating that something unexpected can occur; programmers can create their own conditions. <!-- e.g. antibug() -->.
+
+
+## Syntax Errors
+
+Even though many GUI's and IDE's have syntax highlighting, common syntax errors are:
+
+- Matching: parentheses `()`, (squared) brackets `[]`, braces `{}`, quotation marks `" "` or `''`.
+
+Often... the line number given, where the error occurs, is not where the error needs to be fixed. Why?
+
+
+## More nasty... | Logical errors
+
+From the model answers of assignment week 3: 
+
+```{r, eval = FALSE}
+functs <- ls(envir = as.environment("package:stats"))
+functs <- functs[functs != "p.adjust.methods"]
+stat.args <- unique(names(unlist(lapply(functs, formals))))
+```
+
+
+## More nasty... | Logical Errors
+
+```{r}
+formals('acf')[1:4]
+```
+
+
+## More nasty... | The code is working, but...
+
+```{r}
+unlist(names(formals('acf')))
+names(unlist(formals('acf')))
+```
+
+
+## More nasty... | Fix logical error
+
+```{r, eval = FALSE, tidy = TRUE}
+functs <- ls(envir = as.environment("package:stats"))
+functs <- functs[functs != "p.adjust.methods"]
+stat.args <- unique(
+  unlist(
+    lapply(functs, function(fnt){
+      names(formals(fnt))
+      }
+    )
+  )
+)
+```
+
+
+## Recap
+
+- Messages   
+- Warnings   
+- Errors   
+    + Syntax  --> Be precise
+    + Runtime --> Make your code more generic
+    + Logical --> Test / Test / Test 
+
+
+# Debugging
+
+## Debugging | Where does the Terminology come from ?
+
+Error, flaws, mistakes in your code are ususally called a bug:
+
+<img src= "http://upload.wikimedia.org/wikipedia/commons/8/8a/H96566k.jpg" alt = "Drawing" width="50%" height="50%">
+
+Then... How do we fix a bug? :s
+
+## Modular top down | Functions
+
+> "Most good software developers agree that code should be written in a modular manner. Your first-level code should not be longer than, say, a dozen lines, with much of it consisting of function calls. And those functions should not be too lengthy and should call other functions if necessary. This makes the code easier to organize during the writing stage and easier for others to understand when it comes time for the code to be extended."
+
+Norman Matloff
+
+
+## Finding bugs
+
+Old days...
+
+- using `print`/`cat` statements
+
+- **outcommenting using binary search!**
+
+- ask someone (someone relevan)
+
+
+## Finding bugs
+
+Nowadays... we add:
+
+- Internet 
+
+- Ask via Internet (supplementary materials, how to ask questions)
+
+- 13.4 and 13.7 (and `WWW`)
+
+
+## Finding bugs
+
+Binary search strategy!
+
+- Comment out half of your code
+
+- See if the same error arises
+
+- If it does, it's in the remaning half; otherwise, it's in the half you deleted..
+
+and so on..
+
+<!-- check whether the students get this! Brent's optimization method -->
+
+
+## Primary Debugging Tools in R
+
+These are interactive tools specifically designed to allow you to pick through a function:
+
+- `traceback`: prints out the function call stack after an error occurs; does nothing if there's no error   
+- `debug`: flags a function for `debug` mode which allows you to step through execution of a function one line at a time   
+- `browser`: suspends the execution of a function wherever it is called and puts the function in debug mode.
+- `trace`: allows you to insert debugging code into a function at specific places
+- `recover`: allows you to modify the error behavior so that you can browse the function call stack
+
+
+## This course
+
+In the next labmeeting, we introduce you to: 
+
+- `debug()` & `undebug()`  |  `debugonce()`
+
+-  `browser()` and  `setBreakpoint()`
+
+<!-- also a lab meeting -->
+
+
+## Important for Labmeeting
+
+Write your function
+
+```{r, eval = FALSE}
+findruns <- function(x,k) {
+  n <- length(x)
+  runs <- NULL
+  for (i in 1:(n - k)){
+    if (all(x[i:i + k - 1] == 1)) runs <- c(runs, i)
+  }
+ return(runs)
+}
+```
+
+into an Rscript file!
+
+## Important for labmeeting
+
+```{r, eval = FALSE}
+cat("
+findruns <- function(x,k) {
+  n <- length(x)
+  runs <- NULL
+  for (i in 1:(n - k)) {
+    if (all(x[i:i + k - 1] == 1)) runs <- c(runs, i)
+  }
+ return(runs)
+}"
+, file = 'findruns.R')
+```
+```{r, eval = FALSE}
+source('findruns.R')
+```
+<!-- check with Elise's lecture! Working directory -->
+
+
+## Debugging
+
+```{r, eval = FALSE}
+debug(findruns)
+findruns(c(1,0,0,1,1,0,1,1,1),2)
+undebug(findruns)
+```
+
+When entering the debug mode:    
+
+- Use n (next) and c (continue) for control and Q to quit   
+- Use print(n) and print(c) to print variables n and c   
+
+
+## Debugging  | Summary
+
+There are many indications that could lead you to a problem in your code (a bug). However, you only know when your function is wrong...
+
+When analzing a function with a problem, make sure you can reproduce the problem. Clearly state your expectations and how the output differs from your expectation.
+
+`R Debugging` Tools can help you through in an organized fashion.
+
+
+# Afternoon Lab meeting
+
+# Recap
+
+Power of vectorization    
+
+Check speed of code: `system.time()`, or `Rprof()`   
+
+Four different types of possible errors in code   
+
+Three different debugging strategies (manual, help, `debug()` and related functions)   
+

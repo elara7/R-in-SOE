@@ -1,0 +1,84 @@
+---
+title: "Labmeeting Week 6 SCR"
+output:
+  pdf_document:
+    keep_tex: yes
+---
+
+
+# Tutorial on Performance Enhancement & Debugging
+
+# Morning exercises 1-3
+
+##Exercise 1: Compare `replicate`, `sapply` and 'for loop' with `system.time()`
+
+Conduct the following small experiment in which you are going to compare `replicate`, `sapply`, and a `for loop` using the function `system.time()`.
+
+```{r, label = ex1}
+system.time(sapply(numeric(1e5), function(x) j <- exp(100*log(choose(8, 1000 - 8))) ))
+system.time(replicate(1e5, j <- exp(100*log(choose(8, 1000 - 8))) ))
+system.time({for(i in 1:1e5) j <- exp(100*log(choose(8, 1000 - 8))) })
+```
+
+How variable do you think these results are? Is there a clear winner or looser on speed? Would you prefer `replicate`, `sapply`, or a `for loop` to measure the speed of your `j <- exp(100*log(choose(8, 1000 - 8)))` code?
+
+
+**Answer:** *You can type your answer here.*
+
+
+
+
+##Exercise 2: Generating a Power Matrix . 
+
+Go through the extended example 14.2.3, Generatig a Powers Matrix.
+
+
+##Exercise 3. R profiler
+
+**3a.** First, run this example:
+
+```{r, label = exampleEx2, tidy = FALSE}
+cat("
+    Bla bla
+    
+", file = 'example.R')
+
+cat("
+
+    Bla bla again
+    
+", file = 'example.R', append = TRUE)
+```
+
+Now, check the file example.R.
+
+Read and carefully code the extended example of 14.2.3: Generating a Power Matrix. Store your power functions in a `powers.R` script file using the above `cat` function. 
+
+```{r, powers1, tidy = FALSE}
+cat(" 
+powers1 <- function(){}
+
+", file = "", append = TRUE)
+```
+
+
+```{r, powers2, tidy = FALSE}
+```
+
+
+After you created the file powers.R, clear your workspace using rm(list = ls()), and then run
+the code `source("powers.R")`. Now, read, evaluate, and confirm the R code in 14.4
+
+Note, on page 319 is stated the following:
+
+> Note, too, that Rprof() is no panacea. If the code youre profiling produces many function calls (including indirect calls, triggered when your code calls some function that then calls another within R), the profiling output may be hard to decipher. 
+
+Inspect the lecture slides of (this) week 5. Explain which arguments in the `Rprof()` and `summaryRprof()` functions could ease the deciphering of your profiling output. Also explain why.
+
+
+# Afternoon on Debugging
+
+If not done yet, complete unfinished exercises from the morning labmeeting, and then:
+
+Perform the two full debugging sessions in 13.3.6, but before doing so, read 13.3.2.
+

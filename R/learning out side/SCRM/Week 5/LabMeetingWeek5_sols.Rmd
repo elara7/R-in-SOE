@@ -1,0 +1,320 @@
+---
+title: "Week 5 Labmeeting"
+author: "SCR team"
+date: "28 Nov 2014"
+output: html_document
+---
+
+#Exercise 1. Central limit theorem
+
+On Blackboard, go to the folder of Week 4. Download the file "Centrallimittheorem.Rmd". And open this file in Rstudio. Inspect the code in this file. Click on Run document and play around with the buttons. [NB. If you are unable to run this Shiny application on your computer, look for somebody with a laptop that is able to run it, and work together].
+
+a. Now, we add another option in the Distribution pane from which we sample, for example, the t-distribution.
+
+You can do this in the following way. Add to the code of the inputPanel, the t-distribution: (copy and paste the code below to the Centrallimittheorem.Rmd file)
+
+```{r, eval = FALSE}
+selectInput("dis", label = "Distribution",
+              choices = c("normal", "exponential", "t"), selected = "t"),
+```
+
+And add to the code of renderPlot, the following if statement:
+```{r, eval = FALSE}
+if (input$dis == "t"){
+  mat <- matrix(rt(n * nsamp, df = n - 1), nrow = n)
+  xhist <- c(-3, 3)
+  }
+```
+
+Click again on Run document and inspect the sampling distribution of the sample mean of the t-distribution. Vary the number of observations.
+
+b. Add another option in the Distribution pane from which to sample. For example, the uniform distribution or the gamma distribution. You are free in your choice.
+
+Note. To learn more about the theorem, see [Central Limit Theorem](https://www.youtube.com/watch?v=Pujol1yC1_A).
+
+#Solution of Exercise 1, see the lecture slides of week 1.
+
+
+
+#Exercise 2. Statistical distributions in R.
+
+Go to the following website about [Statistical distributions in R](http://www.cyclismo.org/tutorial/R/probability.html). Read the text of chapter 4 thoroughly, and perform the examples of 4.1 through 4.4 in R.
+
+
+
+#Exercise 3. Set operations
+
+Go to par. 8.5 of the book (pp. 202 and 203). 
+
+a. Perform the examples of the book.
+
+b. Create your own sets (x and y) and play around with the set functions. Try to predict in advance (before running the code) what the output will be.
+
+
+#Exercise 4. Simulation with the use of set operations
+
+Read the extended example 8.6.3 of the book "A combinatorial simulation".
+
+a. First try to imagine what the output is of sim() and choosecom().
+
+b. Simulate a solution to the problem by using these functions (given below). Choose nreps = 100.
+
+```{r}
+sim <- function(nreps) {
+   commdata <- list()  # will store all our info about the 3 committees
+   commdata$countabsamecomm <- 0
+   for (rep in 1:nreps) {
+      commdata$whosleft <- 1:20  # who's left to choose from
+      commdata$numabchosen <- 0  # number among A, B chosen so far
+      # choose committee 1, and check for A,B serving together
+      commdata <- choosecomm(commdata,5)
+      # if A or B already chosen, no need to look at the other comms.
+      if (commdata$numabchosen > 0) next  
+      # choose committee 2 and check
+      commdata <- choosecomm(commdata,4)
+      if (commdata$numabchosen > 0) next  
+      # choose committee 3 and check
+      commdata <- choosecomm(commdata,3)
+   }
+   print(commdata$countabsamecomm/nreps)
+}
+
+choosecomm <- function(comdat,comsize) {
+   # choose committee
+   committee <- sample(comdat$whosleft,comsize)
+   # count how many of A and B were chosen
+   comdat$numabchosen <- length(intersect(1:2,committee))
+   if (comdat$numabchosen == 2) 
+      comdat$countabsamecomm <- comdat$countabsamecomm + 1
+   # delete chosen committee from the set of people we now have to choose from
+   comdat$whosleft <- setdiff(comdat$whosleft,committee)
+   return(comdat)
+}
+```
+
+# Solution to Exercise 4
+```{r, label = sol_4b}
+sim(100)
+```
+Thus the probability that A and B are in the same committee is 12 percent.
+
+c. Adapt the code in sim() in such a way that we can solve the following problem: Two committees of sizes 5 and 10 are chosen from 20 people. What is the probability that persons A and B are chosen for the same committee?
+
+```{r, label = sol_4c}
+simadapt <- function(nreps) {
+   commdata <- list()  # will store all our info about the 3 committees
+   commdata$countabsamecomm <- 0
+   for (rep in 1:nreps) {
+      commdata$whosleft <- 1:20  # who's left to choose from
+      commdata$numabchosen <- 0  # number among A, B chosen so far
+      # choose committee 1, and check for A,B serving together
+      commdata <- choosecomm(commdata, 5)
+      # if A or B already chosen, no need to look at the other comms.
+      if (commdata$numabchosen > 0) next  
+      # choose committee 2 and check
+      commdata <- choosecomm(commdata, 10)
+      if (commdata$numabchosen > 0) next  
+       }
+   print(commdata$countabsamecomm/nreps)
+}
+simadapt(100)
+```
+Thus, in this new situation with two committees of sizes 5 and 10 chosen from 20 people, the probability that A and B are chosen for the same committee is ca. 34 percent.
+
+
+# Exercise 5. Leave-one-out cross-validation
+
+A specific case of k-fold cross-validation is leave-one-out crossvalidation. In this case, the training set consists of n-1 observations, and the test set is just one observation (the one left out from the training set). This process is repeated for each of the n observations.
+
+a. Adapt the code below (for k-fold cross-validation) in such a way that you perform leave-one-out cross-validation.
+
+```{r, label = Example_5a, warning = FALSE}
+library(car); data(Duncan); 
+#fit a linear model "mod"
+mod <- lm(prestige ~ income + education, data = Duncan) 
+RSS <- sum((Duncan$prestige - fitted(mod))^2) #residual ssq
+
+#perform 10 fold cross validation
+set.seed(50); 
+kfold <- 10; n <- length(Duncan$prestige)
+index <- sample(rep(1 : kfold, ceiling(n / kfold)), n); 
+yhat <- numeric(length(Duncan$prestige))
+for(i in 1 : kfold){
+    test.set <- Duncan[index == i, ]
+    train.set <- Duncan[!index == i, ]
+    mod <- lm(prestige ~ income + education, data = train.set)
+    yhat[index == i] <- predict(mod, newdata = test.set)
+}
+RSS.CV <- sum((Duncan$prestige - yhat)^2)
+#apparent and expected (i.e., cross-validated) residual sum of squares
+c(RSS, RSS.CV) 
+```
+
+b. Write a function to perform k-fold crossvalidation for any linear model. Use as input arguments an lm object (i.e., an object created with the function lm), the data, and k (the number of folds).
+
+#Solution Exercise 5
+
+Answer to 5a: Leave-one-out is a special case of k-fold cv (k = n!) 
+
+```{r, label = sol_exc5, warning = FALSE}
+n <- length(Duncan$prestige); kfold <- n;
+index <- sample(1:n); 
+yhat <- numeric(n)
+for(i in 1 : kfold){
+    test.set <- Duncan[index == i, ]
+    train.set <- Duncan[!index == i, ]
+    mod <- lm(prestige ~ income + education, data = train.set)
+    yhat[index == i] <- predict(mod, newdata = test.set)
+}
+RSS.LOO <- sum((Duncan$prestige - yhat)^2)
+#apparent and expected residual sum of squares:
+c(RSS, RSS.LOO) 
+#apparent and expected unexplained variance:
+c(RSS/(n-1), RSS.LOO/(n-1))/var(Duncan$prestige) 
+```
+
+Answer to 5b
+
+```{r}
+crossval <- function(mod, kfold, dataset){
+  # mod is an object of class "lm"
+  # kfold is the number of folds in the cv
+  n <- nrow(dataset)
+ index <- sample( rep(1 : kfold, ceiling(n / kfold)), n); 
+  yhat <- numeric(n)
+  for(i in 1 : kfold){
+    test.set <- dataset[index == i,]
+    train.set <- dataset[index != i,]
+    modtrain <- lm(formula = mod$call$formula, data = train.set)
+    yhat[index == i] <- predict(modtrain, newdata = test.set)
+   }
+ #output is a vector with the cross-validated predicted values
+  return(yhat)
+}
+#test the function
+set.seed(50)
+yhat_cv <- crossval(mod, 10, Duncan)
+RSS.CV <- sum((Duncan$prestige - yhat_cv)^2)
+# apparent and expected residual sum of squares:
+c(RSS, RSS.CV) 
+# apparent and expected unexplained variance:
+c(RSS/(n-1), RSS.CV/(n-1))/var(Duncan$prestige) 
+```
+
+# Exercise 6. Permutation test
+
+The Mini Mental State Examination (MMSE) is a psychological measure to asses cognitive impairment. It is used for instance to asses the presence of Alzheimer's. Suppose we have gathered the following scores from a sample of 3 healthy elderly and 3 elderly Alzheimer's patients. Whether a person has been diagnosed with Alzheimer's disease or not is stored in the variable `alzheimer`. A subject is coded with a 1 if they are diagnosed as Alzheimer's patient, and 0 if the person is healthy. Each individual's score on the MMSE is saved in the variable `mmse.score` (see the R code below visible in the R markdown file). We would like to see if Alzheimer's patients perform differently from healthy patients on this test.
+
+
+```{r,echo=FALSE}
+alzheimer <- c(1, 1, 1, 0, 0, 0)
+mmse.score <- c(21, 23, 25,
+                  24, 26, 29)
+```
+
+If we assume the scores are normally distributed the easiest solution would be to perform a $t$-test (`t.test(mmse.score~alzheimer)`). As you might notice these memory scores might not be necessarily normally distributed. Suppose that we'd rather be `safe' and perform a non-parametric test: we could perform a permutation test (the one described in the slides of this week and also in Rizzo). (Another non-parametric alternative would be the Wilcoxon Rank Sum test, which is actually also a permutation test!).
+
+1. **Exact Permutation Test**. Perform an *exact* permutation test to test the difference of the means of the healthy and the Alzheimer's group on the MMSE. (Hint: you might want to use the function `combn()`). Compare the $p$-value of this procedure with the $p$-value of the $t$-test.
+
+```{r}
+t.test(mmse.score ~ alzheimer)  # just the initial t.test
+
+dd <- combn(6, 3)  # we extract the possible combinations of 3
+x = matrix(0, ncol = 3, nrow = 20)
+y = matrix(0, ncol = 3, nrow = 20)
+for (i in 1:20) {
+    x[i, ] = mmse.score[dd[, i]]
+    y[i, ] = mmse.score[-dd[, i]]
+}
+
+x
+y
+# Now, we took all the possible combinations of 3 in x variable, and
+# the rest of our dataset was assigned in variable y. Thus, we created
+# 2 groups , 20 times( the number of possible combinations ) !
+
+
+# These are the group means in our initial dataset.
+group1 <- mean(mmse.score[1:3])
+group0 <- mean(mmse.score[4:6])
+tt <- abs(group1 - group0)  #... and the absolute value of the difference between them.
+
+x.mean <- apply(x, 1, mean)  #  the meeans for group 1, each time
+y.mean <- apply(y, 1, mean)  # the means for group 2 , each time
+my.test <- x.mean - y.mean  # this is a vector with the differences of the group means,for  each combination. So, 20 differences.
+
+
+z <- numeric(20)
+for (i in 1:20) {
+    z[i] <- abs(my.test[i]) > tt
+}
+mean(z)  # Finally, we compute the number of times our test is bigger than our observed difference.
+```
+
+2. **Feasibility Exact Test**. In a second study (the code to simulate this data can be found below) many more elderly subjects were measured: a total of 100 subjects. Do you think an *exact* permutation test is still feasible? For how many permutations would you need to calculate the test statistic?
+
+```{r,echo=FALSE}
+set.seed(5090214)
+n <- 100
+healthy.score <- round ( 30 - rexp ( n/2, rate = 1 ) )
+patient.score <- round ( 30 - rexp( n/2 ,rate = 0.5 ) )
+alzheimer <- rep( c ( 0, 1 ), each = n/2 )
+mmse.score <- c( healthy.score, patient.score )
+data <- data.frame ( alzheimer = alzheimer, mmse.score = mmse.score )
+```
+
+In this case , it is impossible to take all the possible combinations. They are about 1.008913445 E+29 !!!! So it is not feasible to perform an exact permutation test here.
+Therefore, we could take a large sample from these possible permutations, and perform the test based on them. Maybe 1000 samples would be enough.
+
+3. **Monte Carlo Permutation Test**. Assume the number of permutations is too large to perform an *exact* permutation test. Do a Monte Carlo study with $B=100$ to perform the permutation test to test for the difference in the means of the two groups. Would you trust the inference from this simulation study (is 100 simulations enough)?
+
+```{r}
+init <- mean(healthy.score) - mean(patient.score)  # the difference of the means in the 2 groups
+
+nm <- t.test(data$mmse.score ~ data$alzheimer)$statistic  # the t statistic in our initial dataset
+
+vec <- data$mmse.score
+BB <- 100  # our sample
+res <- numeric(BB)
+res2 <- numeric(BB)
+set.seed(2038)
+for (i in 1:BB) {
+    k <- sample(length(vec), size = length(vec)/2, replace = FALSE)
+    x1 <- vec[k]
+    y1 <- vec[-k]
+    res2[i] <- mean(x1) - mean(y1)
+    res[i] <- t.test(x1, y1)$statistic  # the t-statistic for the ith run
+    
+}
+mean(res >= nm)  # the test-statistics based on t-test
+mean(abs(res2) >= abs(init))  # the test-statistic based on differences of the group means
+```
+
+
+So, we took a sample of 100 possible combinations , and performed an approxiamte permutation test. Actually, we used 2 tests, one based on the t-statistic  and one based on the differences of the group means. In both cases, the result -the p-value- was less than a significance level of a=0.05, which means that we reject the null hypothesis of equal means.This result comes in agreement with our tests on the initial dataset, where the result was also significant.
+
+Here we did only 100 simulations. In fact, this is not a very big number, which means that we cannot be very confident about the results. Usually, 1000 is good enough number of simulations.
+
+
+4. **Standard Error of Simulation** Replicate the Monte Carlo permutation test for (say at least 25) different values of B between $B=100$ and $B=100000$. Plot the estimate of the standard error of simulation versus the number of simulations performed. Do you think this plot will look the same for a Monte Carlo inference studie of a different test statistic or a sample of a larger sample size (say $n=1000$)?
+
+```{r}
+BBB <- seq(100, 1e+05, by = (1e+05 - 100)/25)  # we take 25 values in this sequence
+qqq <- function(BBB) {
+    res <- numeric(BBB)
+    res2 <- numeric(BBB)
+    set.seed(2038)
+    for (i in 1:BBB) {
+        k <- sample(length(vec), size = length(vec)/2, replace = FALSE)
+        x1 <- vec[k]
+        y1 <- vec[-k]
+        res2[i] <- mean(x1) - mean(y1)
+        res[i] <- t.test(x1, y1)$statistic  # the t-statistic for the ith run
+    }
+    return(mean(res >= nm))  # the test-statistics based on t-test
+    return(mean(abs(res2) >= abs(init)))
+}
+
+results <- sapply(BBB, qqq)  # we apply the montecarlo simulation for every value of BBB
+results
+```

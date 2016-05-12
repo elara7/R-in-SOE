@@ -1,0 +1,172 @@
+---
+title: "Power of a t-test and sample size calculation"
+author: "Assignment week 4; SCR team"
+date: "26 Nov 2014"
+output: pdf_document
+---
+
+\begin{center}
+Yi He
+
+s1684698
+\end{center}
+
+#Specific instruction for this peer-review assignment:
+
+- Your solution to this assignment will be reviewed by peers, **who will be randomly selected**. You will also review the solutions of three randomly selected peers. Blackboard will divide solutions across students;
+- Work on the solution of the assignment entirely on your own.
+- Write your solution in an R Markdown file (.Rmd); Make sure that other students can reproduce your solution;
+- Turn in the R Markdown file on Blackboard in the inbox of the assignment **before 13.00h on Monday Nov 30**. Make sure that you put your name in the title.
+- Blackboard is open for peer review from **Monday Nov 30 15.00h**. Go to the inbox of the Peer-review. View and copy the R Markdown file of the peers you need to evaluate. Create a new .Rmd file in Rstudio and copy the text of the .Rmd from blackboard. If you have any problems copying the file, you can e-mail the instructor Elise Dusseldorp on Monday evening Dec 1).
+- Submit your two reviews on Blackboard **no later than Thursday Dec 3, 11.00h**;
+- You can view on blackboard the reviews of your peers. The instructors will grade your assignment and peer reviews with a pass or no pass.
+
+
+
+
+#Task 1. Power of a t-test
+
+We have a random sample A of $n$ observations from a normal distribution with $\mu = 3$ and $\sigma = 1$. (Imagine, for example, that the population mean of 3 indicates that members of this population play *on average* three hours of computer games a day). In addition, we have a random sample B of $n$ observations from a normal distribution with $\mu = 2.5$ and $\sigma = 1$. (Imagine, for example, that due to an intervention, members of population B play *on average* two and a half hours of computer games a day). 
+
+Let the null hypothesis be $\mu{_A} = \mu{_B}$, where $\mu{_A}$ denotes the  mean value of population A (the control group), and $\mu{_B}$ denotes the mean value of population B (the intervention group). The alternative hypothesis is that $\mu{_A} \neq \mu{_B}$. By means of an independent Student's $t$-test, we are investigating whether the intervention indeed changed the amount of time spent on computer gaming (in other words whether the alternative hypothesis was true). Remember that (in general) we can make two types of error: Either we accept the alternative hypothesis, while the null-hypothesis is true (i.e., Type I error, its probability of occurring denoted with $\alpha$), or we accept the null hypothesis, while the alternative hypothesis is true (i.e., Type II error, its probability of occurring denoted with $\beta$).
+
+If $n_A = n_B = 64$, the power (i.e., $1 - \beta$) of the independent Student's $t$-test equals 0.80, given a two-sided $\alpha = 0.05$. Show empirically (by simulating many samples, and performing a $t$-test on each of these samples) that this is true. Use set.seed(4444).
+
+```{r}
+Calpower <- function(d, alpha, n, n.rep){
+  # Calculate the power of a two-sample t-test by simulations.
+  #
+  # Args:
+  #   d: Difference between two population mean.
+  #   alpha: Significance level.
+  #   n: Sample size.
+  #   n.rep: Number of replications for each simulation.
+  #
+  # Returns:
+  #   Power of a specific two-sample t-test defined by args.
+  A <- replicate(n.rep, rnorm(n, sd = 1, mean = d), simplify = 'matrix')
+  B <- replicate(n.rep, rnorm(n, sd = 1, mean = 0), simplify = 'matrix')
+  A.var <- apply(A, 2, var)
+  B.var <- apply(B, 2, var)
+  A.mean <- apply(A, 2, mean)
+  B.mean <- apply(B, 2, mean)
+  s <- sqrt((n - 1)*(A.var + B.var)/(2*n - 2))
+  t.stat <- abs(A.mean - B.mean)/(s*(sqrt(2/n)))
+  power <- mean(t.stat > qt(1-0.5*alpha, 2*n - 2)) + 
+    mean(t.stat < qt(0.5*alpha, 2*n - 2))
+  return(power)
+}
+```
+Remarks: 
+
+1. The result might be different from for loop or other methods, because here the function samples A (size = $n*n.rep$) and then B(size = $n*n.rep$), in for loop the sampling procedure might be: sample A(size = $n$) and then B(size = $n$), and next iteration sample A(size = $n$) and then B(size = $n$). Under set.seed(4444), it is reasonable that each simulation has different samples A and B and returns different t-statistics. 
+
+2. The function directly samples from one population with $\mu = d$ and another population with $\mu = 0$. The result is the same as sampling from population with $\mu = 3$ and population with $\mu = 2.5$. It can be easily found by checking set.seed and rnorm for different means.
+
+```{r}
+n <- 64
+set.seed(4444)
+Calpower(d = 0.5, alpha = 0.05, n, n.rep = 100)
+set.seed(4444)
+Calpower(d = 0.5, alpha = 0.05, n, n.rep = 1000)
+set.seed(4444)
+Calpower(d = 0.5, alpha = 0.05, n, n.rep = 10000)
+```
+
+According to the results, when replications of each simulation increase, the difference between theoretical value(0.8) and simulated value becomes smaller.
+
+# Task 2. Sample size calculation
+
+In many applied research fields, a sample size calculation is performed before the actual experiment (e.g., a randomized controlled trial) is conducted. Usually the expenses of an experiment, in terms of money (for instance in agricultural research) or total strain put on subjects (in medical research) is a function of the number of subjects and we would like to test our hypotheses as efficient as possible in terms of number of subjects involved in our research. Thus usually we decided on a particular minimum probability (power) such that if we do the experiment (and the expected effect in the hypothesis is equal to the one we assume, guess, or base on previous research) we are quite certain (with probability $1-\beta$) that the test we perform to test our hypthesis will be significant. Thus besides chosen levels for power and $\alpha$, a sample size calculation (for Student's $t$-test) needs a difference in the means between two samples (as mentioned this difference can be based on previous studies). The mean difference is usually expressed as a standardized mean difference (i.e., an effect size $d$). In the example above, the effect size $d$ was equal to 0.50, which is considered to be a medium effect size (Cohen, 1988).
+
+Perform a simulation study to investigate empirically which minimum sample size is needed for a given combination of effect size, power level and alpha level. 
+Use the following design factors in your simulation study: an effect size of 0.20, 0.50, and 0.80, and a power level of 0.80 and 0.90. Fix the two-sided $\alpha$ level at 0.05. Use a full factorial design, thus in this case 3 by 2 combinations are possible. For each of these combinations, find **empirically** the minimum sample size needed. Do not use any existing formula for sample size calculation. Again, use set.seed(4444). NB: because we are sampling you will not necessarily get an exactly correct estimate, as you would get using a correct formula. Your estimate will necessarily be approximate, however, think about trying to get a reasonably accurate estimate.
+
+Show in your report:
+
+- the code you used for this simulation study, 
+- a clear presentation of the results of the simulations, and
+- a conclusion.
+
+*Hints for Task 2. Use a while loop in your solution; and/or use the bisection method.* 
+\newpage
+```{r}
+CalSamplesize.bi <- function(d, alpha, n.max, power){
+  # Calculate minimum sample size for given power of a two-sample t-test.
+  # 
+  # Args:
+  #   d: Effect size.
+  #   alpha: Significance level.
+  #   n.max: A number indicates the right bound of bisection process.
+  #   power: A number gives power of a t-test.
+  #
+  # Returns:
+  #   A number, minimum sample size of a specific two-sample t-test.
+  n.l <- 2
+  n.r <- n.max
+  power.r <- Calpower(d, alpha, n.r, n.rep = 1000)
+  power.l <- Calpower(d, alpha, n.l, n.rep = 1000)
+  diff <- abs(n.r - n.l)
+  while(diff > 0){  
+    n.mid <- round((n.l + n.r)/2)
+    power.mid <- Calpower(d, alpha, n.mid, n.rep = 1000)
+    if (power.mid < power) {
+      n.l <- n.mid
+    } 
+    else if (power.mid > power) {
+      n.r <- n.mid
+    } 
+    else if (power.mid == power) {
+      n.r <- n.mid
+      n.l <- n.mid
+      break
+    }
+    diff <- abs(n.r - n.l)
+  }
+      return(n.l)
+}
+
+
+```
+
+\newpage
+```{r}
+set.seed(4444)
+a1 <- CalSamplesize.bi(d = 0.2, alpha = 0.05, n.max = 1000, power = 0.8)
+set.seed(4444)
+a2 <- CalSamplesize.bi(d = 0.2, alpha = 0.05, n.max = 1000, power = 0.9)
+set.seed(4444)
+b1 <- CalSamplesize.bi(d = 0.5, alpha = 0.05, n.max = 1000, power = 0.8)
+set.seed(4444)
+b2 <- CalSamplesize.bi(d = 0.5, alpha = 0.05, n.max = 1000, power = 0.9)
+set.seed(4444)
+c1 <- CalSamplesize.bi(d = 0.8, alpha = 0.05, n.max = 1000, power = 0.8)
+set.seed(4444)
+c2 <- CalSamplesize.bi(d = 0.8, alpha = 0.05, n.max = 1000, power = 0.9)
+result <- matrix(c(a1, a2, b1, b2, c1, c2), ncol = 3)
+colnames(result) <- c('d = 0.2', 'd = 0.5', 'd = 0.8')
+rownames(result) <- c('power = 0.8', 'power = 0.9')
+result
+```
+
+To make it more efficient, bisection method is used in this function.
+
+For specific d and alpha, when n increases, the power increases.
+
+Results show that, at the same power level, when d decreases, the minimun sample size increases. That means it is harder to detact the difference between two samples if d is relatively small. At the same d level, when power increases, minimun sample size increases. That means if we want a higher power for specific d, we need a larger sample size. These results can be interpreted as follows. If the two samples are very close to each other, we need a larger sample size to make their distributions more concentrated, thus reduce $\beta$ (if checking with histograms, $\beta$ is the area bounded with density of A, x = critical value and x axis) and get a larger power.
+
+Remark: 
+
+If we change n.max, even under the same set.seed, the result would be slightly different. For set.seed(4444), if n.max = 1000, first calculation of power.r will take the first $1000*n.rep*2$ samples from this seed, and when n.max = 10000, it would take the first $10000*n.rep*2$ samples from this seed, since we did not use set.seed in Calpower, the result should be different.
+
+#Questions for the peer review:
+
+
+- Can you run the .Rmd file (i.e., is the report reproducible)? Yes / No
+- Inspect the R-code for Task 1 very closely. Do you understand the R-code? Give a score from 1 (no, not at all) to 5 (yes, completely).
+- How efficient is the R-code for Task 1 in your opinion? Give a score from 1 (not so efficient) to 5 (very efficient)
+- Inspect the R-code for Task 2 very closely. Do you understand the R-code? Give a score from 1 (no, not at all) to 5 (yes, completely).
+- How efficient is the R-code for Task 2 in your opinion? Give a score from 1 (not so efficient) to 5 (very efficient)
+- Is the report clearly written? Give a score from 1 (no, not at all) to 5 (yes, completely).
+- Give two tips: what can be done better? Open question.
+- Give two tops: what did you like? Open question.

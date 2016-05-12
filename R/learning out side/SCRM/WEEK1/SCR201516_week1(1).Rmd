@@ -1,0 +1,198 @@
+---
+title: "Lecture 1 SCR"
+subtitle: Motivation for R
+runtime: shiny
+output:
+  ioslides_presentation:
+    keep_md: yes
+    transition: faster
+---
+
+
+
+
+# Introduction to R | basic structures
+
+## Read from the book:
+
+- Introduction
+- Chapter 1, a special focus on: 1.2, 1.4-5, 1.7,1.3
+- Chapter 2 + 3
+
+
+## About R commands   
+
+- Elementary commands: expressions and assignments
+  +  e.g. `> a <- 1`
+  
+- An expression given as command is evaluated printed and then discarded
+  + e.g. `> 1 + 1`
+  
+- An assignment evaluates an expression and passes the value to a variable 
+    + the result is not automatically printed
+
+- Note R commands are case sensitive!
+    + `Gender` is different than `gender`
+  
+
+## Frequently used R objects
+
+**Every object in R has a `class`**
+
+This dictates how (some) generic methods (e.g., `plot`, `summary`, etc.) deal with this object
+
+**Some common R classes and their mode**
+
+- vector of mode `logical`, `integer`, or `numeric` 
+- vector of mode `character` & `factor`
+- `matrix` <- has only one mode
+- `list` & `data.frame` <- can have mixed modes
+- `function`
+
+## R Operators (Functions)
+
+- `<-`, `+` are operators
+
+but also functions:
+
+- `"<-"(a, 1)`
+
+- `"+"(a, 1)`
+
+
+
+## Frequently used R Operators
+
+**Assignment / Filtering Operators:**
+
+- `<-`   Left assignment, binary
+- `=`	Left assignment, binary
+- `->` 	Right assignment, binary
+- `$` 	List subset, binary
+
+
+**Arithmetic:**
+
+- `-`   Minus, can be unary or binary
+- `+` 	Plus, can be unary or binary 
+- `*`   Multiplication, binary
+- `/`   Division, binary
+- `^`   Exponentiation, binary
+
+## Logical Operators
+
+- `!` Unary not
+- `<` Less than, binary
+- `>` Greater than, binary
+- `==` Equal to, binary
+- `!=` Unequal to, binary
+- `>=` Greater than or equal to, binary
+- `<=` Less than or equal to, binary
+- `&` And, binary, vectorized
+- `&&` And, binary, not vectorized
+- `|` Or, binary, vectorized
+- `||` Or, binary, not vectorized
+
+## Frequently used R Operators
+
+**Special binary operators**:
+
+- `%/%`   Integer divide, binary
+- `%*%`   Matrix product, binary
+- `%o%`   Outer product, binary
+- `%x%`   Kronecker product, binary
+- `%in%`  Matching operator, binary (in model formulae: nesting)
+
+## Precedence | From highest to lowest
+
+- `[ [[ (` Indexing
+- `::` or `:::`  access variables in a name space
+- `$` or `@` 	component 
+- `^` 		exponentiation
+- `-` or `+` 	unary minus and plus
+- `:` 		sequence operator
+- `%any%`	special operators
+- `*` or `/` 	multiply, divide
+- `+` or `-` 	(binary) add, subtract
+
+## Precedence | From highest to lowest, continued...
+
+- `<`, `>`, `<=`, `>=`, `==`, or `!=`  ordering and comparison
+- `!` 			negation
+- `&` or `&&` 		and
+- `|` or `||` 		or
+- `~`			as in formulae
+- `->` or `->>` assignment
+- `=` 	assignment
+- `<-` or `<<-` 		assignment
+- `?`  help
+
+
+# The most important slide coming up...
+
+## Getting help / 
+
+1. `help()` / `?`, `apropos()`, and `help.search()`  / `??`
+
+2. [http://www.rseek.org](http://www.rseek.org)
+
+3. [Google](https://www.google.nl) or [Duck and Go](https://duckduckgo.com)
+     + Via google you most of the times end up at useful fora (e.g. [Stackoverflow](http://stackoverflow.com))
+     
+4. Or maybe there is someone out there...
+
+
+# That was the most important slide
+
+
+
+
+## Assignment operators in R |
+
+Notice, for both `x <- 15` and `x = 15`, the object `x` gets assigned the value 15.
+
+We follow the [Google's R Style Guide](https://google-styleguide.googlecode.com/svn/trunk/Rguide.xml) guide, so in this course we use `<-`. 
+
+For more information, on such things, [stack overflow](http://stackoverflow.com/questions/1741820/assignment-operators-in-r-and)
+
+
+
+## Readability of your code:
+
+- [Google's R Style Guide](http://google-styleguide.googlecode.com/svn/trunk/Rguide.xml)
+
+- See [blackboard](https://blackboard.leidenuniv.nl/webapps/blackboard/content/listContentEditable.jsp?content_id=_2983161_1&course_id=_152059_1&mode=reset) for further details on report requirements.
+
+
+
+# Lab Meeting 2 |  Week 1
+
+`swirl()` 
+
+[Erik van Zwet's slides](https://blackboard.leidenuniv.nl/bbcswebdav/pid-3048653-dt-content-rid-2411264_1/courses/4373STCWR-1415FWN/R_intro_teacher.pdf)
+
+Assignment,  See [Blackboard](https://workinglinkhere!)
+
+
+
+
+# Closing Recap
+
+RStudio
+
+Reproducible Reports
+
+Basics in R
+
+Google's R Coding style
+
+Assignment
+
+
+
+
+
+
+
+
+

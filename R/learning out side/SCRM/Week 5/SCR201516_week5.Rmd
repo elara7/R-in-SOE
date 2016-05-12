@@ -1,0 +1,672 @@
+---
+title: "Lecture week 5 SCR"
+subtitle: "Monte Carlo Studies"
+date: "26 Nov, 2015"
+output: 
+  ioslides_presentation: 
+    incremental: yes
+    keep_md: yes
+runtime: shiny
+---
+
+<!-- packages needed:
+ install.packages("bootstrap")
+ install.packages("car")
+ -->
+
+## Recap of week 3
+
+What type is the first input argument of:
+
+- apply( )
+- lapply( )
+- tapply( )
+- sapply( )
+
+A. vector 
+
+B. matrix 
+
+C. list 
+
+
+## Recap of week 3
+
+**Factors and Tables** (Chapter 6)
+
+Which functions are commonly used with factors?
+
+A. apply(), mean() and tapply();
+
+B. sapply(), split() and by();
+
+C. lapply, tapply() and by();
+
+D. tapply, split() and by().
+
+
+
+## Recap of week 4
+
+- `rgl` bites `rshiny` and `googleVis`
+
+- `fig.show = 'animation'` 
+
+- Advantage of bacic plot() and par()?
+
+
+# Topics of week 5 |
+
+- Monte Carlo Studies (Ch. 8)
+- Resampling (not really in the book) 
+
+
+## Week 4 learning objectives
+
+- Apply Monte Carlo studies to approximate the Bias and the MSE 
+
+- Awareness of simulation error.
+
+- Apply Monte Carlo studies to approximate the type I error and Power of a test.
+
+- Code your own permutation tests
+
+- Read and apply code for Cross Validation
+
+
+
+##  Outline of this morning
+
+Distribution `functions`: r,d,p,q
+
+Monte carlo experiments for the    
+
+- Sampling distribution   
+
+- Bias   
+
+- MSE   
+
+Concept of simulation error   
+
+
+# Monte Carlo Experiments
+
+<img src= "https://upload.wikimedia.org/wikipedia/commons/3/36/Real_Monte_Carlo_Casino.jpg" alt = "Drawing" width="60%" height="60%">
+
+<!-- https://en.wikipedia.org/wiki/Monte_Carlo_method -->
+
+
+
+
+## Why Monte Carlo Studies? 
+
+To evaluate the performance of statistical procedures; just see many of our [statistical science masther thesis's](http://www.math.leidenuniv.nl/scripties/)
+
+To clarify or verify your math (e.g. central limit theorem)
+
+
+# Built-in Random Variate Generators 
+
+## Built-in Random Variate Generators 
+
+Functions in R to generate variates randomly:
+
+- **rnorm()**: Normal distribution
+- **rbinom()**: Binomial distribution
+- **rt()**: t-distribution
+- **runif()**: Uniform distribution
+- **rchisq()**: Chi-squared distribution
+- **rgamma()**: Gamma distribution
+- **rexp()**: Exponential distribution
+
+Important: The first input value of these functions is always $n$ (number of observations). The rest of the input arguments differs, and some have default values.
+
+****
+
+To learn more about distributions, see [R learning module Probabilities and distributions](http://www.ats.ucla.edu/stat/r/modules/prob_dist.htm)
+
+
+## More about functions for distributions 
+
+Each r distribution function also has the following variants:
+
+- a `d` for the density or probability mass function;
+- a `p` for the cumulative distribution;
+- a `q` for quantiles.
+
+
+## Visualize d,p,q distribution functions
+
+<!-- example visual here? -->
+- density
+- cumulative density
+- qqplot
+
+
+# Sampling distribution
+
+## Sampling distribution
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))
+
+STATISTIC $T = T(X)$    
+
+The distribution of $T$ is called sampling distribution  
+
+
+EXAMPLE OF THEORETICAL SAMPLING DISTRIBUTION:
+
+If $X_1, \ldots, X_n \stackrel{iid}{\sim} N(0, \sigma^2)$,   
+
+then $T = \sqrt{n}\bar{X}/S_X \sim t_{n - 1}$
+
+
+
+## Sampling distribution    
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))
+
+STATISTIC $T = T(X)$
+
+The distribution of $T$ is called sampling distribution
+
+
+DETERMINATION BY SIMULATION:
+
+For $b = 1,\ldots,B$   
+- generate independent replicate $X^b$ of data $X$   
+- compute $T^b =T(X^b)$   
+
+Make a plot (histogram, density, ecdf) of $T_1,\ldots,T_B$.   
+
+
+# Standard Error
+
+## Standard Error
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))
+
+STATISTIC $T = T(X)$   
+
+EXAMPLE OF THEORETICAL STANDARD ERROR:   
+
+If $X_1, \ldots, X_n \stackrel{iid}{\sim} N(0,\sigma^2)$, then $se$ of $\overline{X}$ is $\sigma/\sqrt{n}$. 
+
+
+## Standard Error
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))   
+
+STATISTIC $T = T(X)$   
+
+DETERMINATION OF STANDARD ERROR BY SIMULATION:
+
+For $b = 1,\ldots,B$   
+- generate independent replicate $X_b$ of data $X$   
+
+- compute $T_b =T(X_b)$   
+
+Compute root of sample variance $T^1, \ldots, T^B$, i.e.
+
+$$ \hat{se} = \sqrt{ \frac{1}{B} } \sum^B_{b = 1} (T^b - \overline{T})^2, \qquad \qquad \mbox{where } \overline{T} = \frac{1}{B} \sum^B_{b = 1} T^b $$.
+
+
+# Estimators 
+
+## Estimators 
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))   
+
+ESTIMATOR $T = T(X)$ OF QUANTITY $\theta$   
+
+The bias of $T$ is $\mbox{E}T - \theta$    
+
+EXAMPLE OF THEORETICAL BIAS:
+If $X_1, \ldots, X_n \stackrel{iid}{\sim} N(0,\sigma^2)$, then bias of $\bar{X}$ for $\theta$ is 0.
+
+## Estimators 
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))   
+
+ESTIMATOR $T = T(X)$ OF QUANTITY $\theta$   
+
+DETERMINATION OF STANDARD ERROR BY SIMULATION:
+
+For $b = 1,\ldots,B$   
+- generate independent replicate $X^b$ of data $X$   
+- compute $T^b =T(X^b)$   
+Compute 
+
+$$ \widehat{(\mbox{E}T - \theta)} = \frac{1}{B} \sum^B_{b = 1} T^b - \theta $$
+
+
+# Mean square error
+
+## Mean square error
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))   
+
+ESTIMATOR $T = T(X)$ OF  QUANTITY $\theta$    
+
+The *mean square error* (MSE) of $T$ is $\mbox{E}(T - \theta)^2$.
+
+(It is also the sum of the squared bias and the squared SE)
+
+EXAMPLE OF THEORETICAL MSE:   
+
+If $X_1, \ldots, X_n \stackrel{iid}{\sim} N(0,\sigma^2)$, then MSE of $\bar{X}$ for $\theta$ is \(\sigma^2/n\).
+
+
+## Mean square error
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))   
+
+ESTIMATOR $T = T(X)$ OF  QUANTITY $\theta$    
+
+DETERMINATION OF STANDARD ERROR BY SIMULATION:   
+
+For $b = 1,\ldots,B$   
+- generate independent replicate $X^b$ of data $X$   
+- compute $T^b =T(X^b)$   
+Compute 
+
+$$ \widehat{MSE} = \frac{1}{B} \sum^B_{b = 1} (T^b - \theta)^2 $$
+
+
+# Simulation error
+
+## Simulation error
+
+By making $B$ larger, the simulation error can be made arbitrarily small. $B = 1e4$ is desirable, but $B = 1e3$ is typical, and only $B = 1e3$ may be feasible.
+
+If $\mbox{E}Z$ is estimated by $\bar{Z}_B$ for iid $Z^1,\ldots,Z^B,$ then
+
+$$ \bar{Z}_B - \mbox{E}Z \sim \approx N(0, var Z/B). $$
+
+Thus the $se$ of simulation is $\sqrt{\mbox{var} Z/ B},$ and can be estimated by
+
+$$ \sqrt{B^{-1} \sum^B_{b=1} (Z^b - \bar{Z})^2/B }$$
+
+
+
+## Simulation error
+
+By making $B$ larger, the simulation error can be made arbitrarily small. $B = 1e4$ is desirable, but $B = 1e3$ is typical, and only $B = 1e3$ may be feasible.
+
+
+EXAMPLE:   
+If the MSE, $\mbox{E}(T - \theta)^2$, is estimated by $\widehat{MSE} = B^{-1} \sum^B_{b = 1}(T^b - \theta)^2$, then the $se$ of the simulation can be estimated by 
+$$\frac{1}{B}\sqrt{\sum^B_{b=1}\left[ (T^b - \theta)^2 - \widehat{MSE} \right]^2} $$
+
+<!-- [ The leading fraction 1/B (and not 1/√B) is not a mistake. Do you see where it came from?] -->
+
+
+
+## Recap of this morning
+
+- Statistical distribution functions 
+
+- Sampling distribution
+
+- Bias, MSE, Simulation Error
+
+
+
+# Lab meeting
+
+## Outline of this afternoon
+
+- Type I error and Power   
+- Permutation
+- Cross-validation
+
+
+# Size / Type 1 error
+
+
+## Size / Type 1 error
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))   
+
+STATISTIC $T = T(X)$, REJECTS $H_0$ IF $T \in K$.   
+
+The size of the test is $\alpha = P_{H_0}(T \in K)$.   
+
+EXAMPLE OF THEORETICAL SIZE
+
+Tests are constructed so that the size equals the $level$, e.g. 5%, in prescribed the situation.
+
+
+## Size / Type 1 error
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))   
+
+STATISTIC $T = T(X)$, REJECTS $H_0$ IF $T \in K$.   
+
+The size of the test is $\alpha = P_{H_0}(T \in K)$.   
+
+
+DETERMINATION OF SIZE BY SIMULATION
+
+For $b = 1,\ldots,B$   
+- generate independent replicate $X^b$ of data using its null distribution  
+- compute $T^b =T(X^b)$   
+Compute 
+
+$$ \hat{\alpha} = \frac{1}{B} \sum^B_{b = 1} 1_{T^b \in K} = \mbox{fraction rejections} $$
+
+<!--  
+If H0 is composite, must simulate using the worst case null distribution, or repeatedly simulate using all null distributions and take the maximum of the simulated αˆ.
+-->
+
+
+# Power
+
+## Power
+
+DATA $X$ (possibly equal to ($X_1, \ldots, X_n$))
+
+STATISTIC $T = T(X)$, REJECTS $H_0$ IF IT FALSS IN CRITICAL REGION $K$
+
+The power is $P_{\theta}(T \in K)$ viewed as function of the alternative $\theta \in H_1$.   
+
+EXAMPLE OF THEORETICAL POWER
+
+Power of the $t-$test can be expressed using non-central $t-$distributions.
+
+
+## Power
+
+The power is $P_{\theta}(T \in K)$ viewed as function of the alternative $\theta \in H_1$.   
+ 
+DETERMINATION OF SIZE BY SIMULATION
+
+For $b = 1,\ldots,B$   
+- generate independent replicate $X^b$ of data *using alternative* $\theta$
+- compute $T^b =T(X^b)$   
+Compute 
+
+$$\frac{1}{B}\sum^B_{b = 1} 1_{T^b \in K}$$
+
+Repeat for all alternatives.
+
+
+## Example Power
+
+```{r, eval = FALSE}
+TestStat <- function(x) {
+    n <- length(x)
+    k <- trunc(0.3 * n)
+    y <- sort(x)[(k + 1):(n - k)]
+    mean(y)/sd(y)
+}
+
+B <- 1e4
+s <- numeric(B)
+for (i in 1:B) s[i] <- TestStat(rnorm(20))
+CV <- quantile(s, 0.975)  # critical value by simulation
+a <- numeric(1e3)
+B <- 1e4
+for (i in 1:B) {
+    x <- rnorm(20)
+    a[i] <- (abs(TestStat(x)) > CV)
+}
+```
+
+
+## Example Power
+
+```{r, eval = FALSE}
+b <- seq(0, 2, by = 0.2)
+pow <- numeric(length(b))
+for (j in 1:length(b)) {
+    t <- numeric(B)
+    for (i in 1:B) {
+        x <- rnorm(20, b[j], 1)
+        t[i] <- TestStat(x)
+    }
+    pow[j] <- mean(abs(t) > CV)
+}
+```
+
+<!-- [ Is it useful to resimulate new normal samples for every b?] -->
+
+## Visualization Power
+
+```{r, echo = FALSE, eval = TRUE}
+con <- url('http://pub.math.leidenuniv.nl/~kampertmmd/OPSdat/PowerExample.RData')
+load(file = con)
+close(con)
+```
+
+```{r, eval = TRUE}
+plot(b, pow, type = "l")
+```
+
+
+## Simulation error of a proportion
+
+When estimating a proportion $p = P(Z = 1)$ by a sample fraction $\bar{Z}$, for iid $Z_1,...,Z_B \in \{0,1\}$,
+
+$\bar{Z} - p \sim \approx N(0, p(1-p)/B)$.
+
+The se of simulation can be estimated by
+
+$$ \sqrt{\bar{Z}(1 - \bar{Z})/B} \leq \sqrt{1/4B} $$
+
+# Permutation 
+
+
+## Resampling techniques
+
+Core function for permutations or resampling is `sample()`. In the first argument your need to specify the data from which our are going to take a sample. In the second, the "size" of the sample is specified.
+
+```{r}
+set.seed(2)
+sample(x = 1:6, size = 2)
+```
+
+*****
+
+If you do not specify "size", then the same size as the input vector is taken:
+
+```{r}
+set.seed(2)
+sample(1:6)
+set.seed(2)
+sample(6)
+```
+
+## Sampling with replacement
+
+```{r}
+sample(1:6, replace = TRUE)
+```
+Basic idea: If you sample with replacement, you can compute a statistic of interest (e.g., the mean) many times, for each sample from your original data. 
+```{r}
+mean(sample(1:6, replace = TRUE))
+mean(sample(1:6, replace = TRUE))
+```
+
+
+**** 
+
+Note: Default of `sample()` is **sampling without replacement** 
+
+
+# Permutation tests
+
+## Permutation
+
+*Noun*
+
+Each of several possible ways in which a set or number of things can be ordered or arranged: *his thoughts raced ahead to fifty different permutations of what he must do.*
+
+`from Maarten's Macbook's Dictionary`
+
+## Sampling without replacement: Permutation 
+
+A permutation of the integers {1, 2 ,3 ,..., n} is the same numbers rearranged in a (possibly) different order. 
+
+```{r}
+x <- 1:6
+sample(x)
+```
+
+In how many different ways can we order these 6 integers? 6!
+```{r}
+factorial(length(x))
+```
+
+
+## Permutation test
+
+Take any reasonable test statistic.   
+
+Compare its observed value to the set of values obtained by applying the statistic after <span style="color:rgb(0%,100%,0%);">permuting</span> the data <span style="color:rgb(0%,0%,100%);"> in such a way that the distribution under H0 does not change </span>.   
+
+<!-- <p style="color:rgb(0%,0%,100%);">You can change the text color of a whole sentence or paragraph...</p>
+<p>...or you can change the text color of one <span style="color:rgb(0%,100%,0%);">word</span> or even a single l<span style="rgb(100%,0%,0%);">e</span>tter.</p>
+--> 
+
+Advantages: very flexible, few theory needed, correct level guaranteed.   
+Disadvantage: computationally very expensive.
+
+The *level* is guaranteed, because conditionally given any observed data, we reject with probability less than, say 5%. Hence, unconditionally, we reject with probability less than 5%
+
+
+## Two sample test
+
+DATA $X_1,...,X_m$ and $Y_1,...,Y_n$ independent random samples from $F$ and $G$. 
+
+TEST STATISTIC Reject $H_0$ if $T = T(X_1,...,X_m,Y_1,...,Y_n)$ is large.
+
+Let $Z_1,...,Z_N$ be the $pooled$ sample $X_1,...,X_m,Y_1,...,Y_n$,i.e. $N=m+n$. 
+Under $H_0: F = G$ this is i.i.d. and so is every permutation $Z_{\pi (1)}, . . . , Z_{\pi (N)}$.
+
+
+## Two sample test
+
+DATA $X_1,...,X_m$ and $Y_1,...,Y_n$ independent random samples from $F$ and $G$. 
+
+TEST STATISTIC $T = T(X_1,...,X_m,Y_1,...,Y_n)$
+
+
+PERMUTATION TEST:   
+
+For every partition b of the observed values $z_1, . . . , z_N$ into 2 sets of sizes $m$ and $n$ compute $T^b$ with the $X$’s and $Y$’s taken equal to the two sets.   
+
+For $tobs = T(x_1, ..., x_m, y_1, \ldots, y_n)$ the observed value, compute
+
+$$ \hat{p} = \frac{1}{B}\sum^B_{b = 1}1_{T^b > tobs} $$
+
+**** 
+
+IN PRACTICE
+
+The number of partitions ${N \choose m}$ is too large and one takes a large number of *random partitions* instead.
+
+
+## Paired two-sample test
+
+DATA $(X_1, Y_1), ..., (X_n, Y_n)$ random sample from bivariate distribution.
+
+TEST STATISTIC Recject $H_0$ if $T = T(X_1, ..., X_n, Y_{1}, ..., Y_n)$ is large.
+
+Under $H_0: (X,Y)$ is exchangeable, every of the $2^n$ possible permuations within the pairs compute $T^b$.
+
+
+## Paired two-sample test
+
+DATA $(X_1, Y_1), ..., (X_n, Y_n)$ random sample from bivariate distribution.
+
+TEST STATISTIC $T = T(X_1, ..., X_n, Y_{1}, ..., Y_n)$
+
+PERMUTATION TEST:   
+
+For every of the $2^n$ possible (re)assignments $b$ of the $X$ or $Y$ -label within the pairs compute $T^b$.   
+
+For the observed $t = T(x_1, ..., x_m, y_1, ..., y_n)$, compute 
+
+$$\hat{p} = \frac{1}{B} \sum^B_{b = 1} 1_{T^b} > t $$
+
+
+**** 
+
+IN PRACTICE the number of sign vectors is too large and one takes a large number of sign vectors instead.
+
+
+
+
+
+# Cross-validation
+
+##Cross-validation
+
+**Cross validation** is a statistical procedure for evaluating the performance of learning algorithms for prediction. 
+
+Basic form is $k$-fold cross validation. In this form the data are first splitted in $k$ equally (or nearly equally) sized folds. Then $k$ iterations of training and test are performed such that within each iteration a different
+fold of the data is left out and used as test set while the remaining
+k-1 folds are used as training set.
+
+
+##First step: fit your model for the entire data set
+```{r, warning = FALSE}
+#install.packages("car")
+library(car); data(Duncan); n <- nrow(Duncan)
+# regress prestige on income and education -- entire dataset
+mod <- lm(prestige ~ income + education, data = Duncan) 
+RSS <- sum((Duncan$prestige - fitted(mod))^2) #residual ssq
+varunexpl <- (RSS/(n-1))/var(Duncan$prestige); varunexpl
+1 - summary(mod)$r.squared
+```
+
+##Second step: Perform 10-fold cross-validation
+
+```{r}
+set.seed(50); 
+kfold <- 10; n <- length(Duncan$prestige)
+index <- sample( rep(1 : kfold, ceiling(n / kfold)), n); 
+yhat <- numeric(length(Duncan$prestige))
+for(i in 1 : kfold){
+    test.set <- Duncan[index == i,]
+    train.set <- Duncan[!index == i,]
+    mod <- lm(prestige ~ income + education, data = train.set)
+    yhat[index == i] <- predict(mod, newdata = test.set)
+}
+RSS_CV <- sum((Duncan$prestige - yhat)^2)
+varunexpl_CV <- (RSS_CV/(n-1))/var(Duncan$prestige); 
+varunexpl_CV
+```
+
+##Third step: compare the apparent error and the cross-validated error
+
+```{r}
+c(RSS, RSS_CV) #apparent and expected residual sum of squares
+c(varunexpl, varunexpl_CV) #apparent and expected unexplained variance
+```
+
+
+## When you do **Simulations / Monte Carlo Experiments**
+
+For yourself: 
+
+- Good documentation is essential   
+
+- Write separate programs for each case or keep a precise record   
+
+- Save as much of the output as you can (?!?), and do that in a structured way    
+- Make programs 're-startable' to continue smoothly after a computer crash   
+
+- Or to divide the work over more computers.   
+
+
+##Recap of this afternoon
+
+- Size, Power   
+- Permutation Tests   
+- Cross-validation   
+
+
+# Continue with the lab meeting

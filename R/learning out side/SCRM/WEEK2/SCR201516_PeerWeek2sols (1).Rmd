@@ -1,0 +1,175 @@
+---
+title: "Peer Review Assignment 2"
+author: "Maarten Kampert"
+date: "4 Nov 2015"
+output: pdf_document
+---
+
+# Name: Fred-Frederik Frikadel  
+# ULCN: 2015007
+
+# Assignment 2: Standard Error of the Mean
+
+
+As you know from your basic statistics course, the standard error of the sample mean is given by 
+
+\begin{equation}
+\sigma_{\overline{X}}= \sigma / \sqrt{N},
+\end{equation}
+
+
+where $\sigma$ denotes the standard deviation in the population, $\overline{X}$ denotes the sample mean and $N$ denotes the sample size. In this assignment you will verify this formula using R programming.
+
+
+
+## Q1: Mini Monte-Carlo Simulation
+
+Take ```set.seed(1105)``` and generate $B = 1000$ samples of each $N_1 = 1e1$ objects (= participants) from a $\chi$-square distribution with 10 degrees of freedom.
+
+Repeat this (with $B = 1e3$) for $N_2 = 1e2$ and $N_3 = 1e3$. 
+
+Show in R with computations on the generated samples that the formula of the standard error (1) holds for a growing number of objects $N.
+
+Take into account report requirements and store all your generated data in a list object ```MC.Data`` which would have the following structure
+
+```
+> str(MC.Data)
+List of 3
+ $ N1: num [1:10, 1:1000] 6.53 7.45 4.15 6.28 2.69 ...
+ $ N2: num [1:100, 1:1000] 9.88 4.54 15.28 5.29 23.41 ...
+ $ N3: num [1:1000, 1:1000] 2.96 3.13 7.93 10.48 11.67 ...
+```
+
+
+\newpage
+
+## A1: Mini Monte Carlo Simulaton
+
+We generate the data with the following code:
+
+```{r, label = MC.data}
+set.seed(1105)
+N1e1 <- matrix(rchisq(1e3*1e1, df = 10), nrow = 1e1)
+N1e2 <- matrix(rchisq(1e3*1e2, df = 10), nrow = 1e2)
+N1e3 <- matrix(rchisq(1e3*1e3, df = 10), nrow = 1e3)
+MC.Data <- list(N1 = N1e1, N2 = N1e2, N3 = N1e3)
+```
+Now that we have the ```MC.Data``` object, we can directly calculate the standad error of the sample mean for the sample sizes $N_1 = 1e1, \, N_1 = 1e2, N_3 = 1e3$
+
+```{r}
+est.se <- lapply(MC.Data, function(X){
+  sd(colMeans(X))
+  })
+```
+
+The variance of a $\chi^2$-distribution is twice the mean (degrees of freedom = ```df```) of the distribution. Hence, the true standard error of the sampling mean four our specif sample sizes are
+
+```{r}
+exp.df <- 10; N1 <- 1e1; N2 <- 1e2; N3 <- 1e3
+true.se <- round(c( N1 = sqrt(2*exp.df/N1),
+                    N2 = sqrt(2*exp.df/N2), 
+                    N3 = sqrt(2*exp.df/N3)
+                  ), 3
+                 )
+paste0("N", 1:3, " = ", true.se)
+```
+
+The estimated standard errors were:
+
+```{r}
+est.se <- round(unlist(est.se), 3)
+paste0("N", 1:3, " = ", est.se)
+```
+
+Hence, we can verify that the estimate of our standard error of the mean is really close to the true value.
+
+
+
+
+
+
+
+
+
+
+\newpage
+
+## Q2: If N --> Inf... SE --> 0
+
+There is a clear relationship between sample size $N$ and $\sigma_{\overline{X}}$. Explain this relationship by visualizing the sampling distributions of the mean for the samples with the three different sample sizes generated for question 1 (you may show three separate plots).
+
+
+
+## A2: If N --> Inf... SE --> 0
+
+Below the histograms are given of the sampling distributions of the mean for the three different sample sizes
+
+```{r, label = histograms, echo = FALSE}
+par(mfrow= c(1, 3))
+for(n in 1:length(MC.Data)){
+  hist(colMeans(MC.Data[[n]]), 
+       main = paste("Xbars for N = ", 
+                    get(names(MC.Data)[n]), sep = ""),
+       xlab = " Xbars from Chi-square (df = 10) ",
+       xlim = c(4,16)
+     )
+}
+par(mfrow = c(1,1))
+```
+
+From these histograms, we may conclude that the smaller the size of the samples, the wider the sampling distribution of the sample mean is around the population mean. In other words, the sample means of larger samples are closer to the population mean.
+
+
+
+\newpage
+
+
+## Q3: Non-centrality
+
+What happens with the standard error of the sample mean for samples of sizes $N_1 = 1e1, \, N_1 = 1e2, N_3 = 1e3$ if we add a non-centrality parameter $\lambda = 5$ to the $\chi^2(10)$-distribution from which we generate the data? 
+
+What are the theoretical standard errors of the mean? 
+
+What would be your estimates of the standard error of the mean for each sample size using R code? Use, again, $B = 1000$ Monte Carlo samples for each sample size. 
+
+
+## A3: Non-Centrality
+
+The standard error of the mean would be $$\sqrt{(2*df + 4*\lambda)/N}$$.
+
+For our samples the theoretical standard errors are:
+```{r}
+# use similar code as in question 1
+```
+
+Our estimates:
+```{r}
+# use similar code as in question 1
+```
+
+
+
+
+## ```Q4: Set.seed```
+
+Again set the seed with ```set.seed(1105)` and sample directly $B*(N_1 + N_2 + N_3)$ values from a $\chi^2$-distribution with 10 degrees of freedom.
+
+What are the first and the last values you generated? What are the first and last values you generated in question 1? The values of this question should be the same to those of question 1. Why is this the case?
+
+
+## A4: ```Set.seed```
+
+The first and last value of question 1:
+```{r}
+B <- 1e3
+c(Q1frst = MC.Data[[1]][1], Q1last = MC.Data[[3]][N3*B])
+```
+
+The first and last value when generating all values at once:
+
+```{r}
+set.seed(1105)
+rchisq(B*(N1 + N2 + N3), df = 10)[c(1, B*(N1 + N2 + N3))]
+```
+
+By setting a seed, we tell R from which 'position' to start its (pseudo-) random number generator. Hence the numbers are not really 'randomly' generated, you could say the order of the numbers for each random number generator function in R is already set.

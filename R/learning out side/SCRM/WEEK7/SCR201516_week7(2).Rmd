@@ -1,0 +1,286 @@
+---
+title: "SCR Assignment Week 7"
+author: "SCR-team"
+date: "December 21, 2015"
+output: pdf_document
+---
+
+Yi He
+
+s1684698
+
+
+
+# Write a Student Dean's letter
+
+
+**Q1:**
+
+Create an object `class.record` of class `data.frame` of 0 columns and 50 rows
+
+**A1:**
+
+```{r}
+class.record <- data.frame(matrix(nrow = 50, ncol = 0))
+str(class.record)
+```
+
+**Q2:** 
+
+Add the following variables `last.name` , `first.name` , `gender` , `married`, `enroll`, `theta`, `exp.theta`, `grade.1` , `grade.2`, and `tutorial` to the data.frame `class.records`using the following code:
+
+```{r, label = creadat, eval = FALSE}
+last.name <- c("SMITH", "JOHNSON", "WILLIAMS", "JONES", "BROWN", "DAVIS", 
+    "MILLER", "WILSON", "MOORE", "TAYLOR", "ANDERSON", "THOMAS", "JACKSON", 
+    "WHITE", "HARRIS", "MARTIN", "THOMPSON", "GARCIA", "MARTINEZ", "ROBINSON", 
+    "CLARK", "RODRIGUEZ", "LEWIS", "LEE", "WALKER", "HALL", "ALLEN", "YOUNG", 
+    "HERNANDEZ", "KING", "WRIGHT", "LOPEZ", "HILL", "SCOTT", "GREEN", "ADAMS", 
+    "BAKER", "GONZALEZ", "NELSON", "CARTER", "MITCHELL", "PEREZ", "ROBERTS", 
+    "TURNER", "PHILLIPS", "CAMPBELL", "PARKER", "EVANS", "EDWARDS", "COLLINS")
+first.name <- c("JAMES", "JOHN", "ROBERT", "MICHAEL", "MARY", "WILLIAM", 
+    "DAVID", "RICHARD", "CHARLES", "JOSEPH", "THOMAS", "PATRICIA", "CHRISTOPHER", 
+    "LINDA", "BARBARA", "DANIEL", "PAUL", "MARK", "ELIZABETH", "JENNIFER", 
+    "DONALD", "GEORGE", "MARIA", "KENNETH", "SUSAN", "STEVEN", "EDWARD", 
+    "MARGARET", "BRIAN", "DOROTHY", "RONALD", "ANTHONY", "LISA", "KEVIN", 
+    "NANCY", "KAREN", "BETTY", "HELEN", "JASON", "MATTHEW", "GARY", "TIMOTHY", 
+    "SANDRA", "JOSE", "LARRY", "JEFFREY", "DONNA", "FRANK", "CAROL", "RUTH")
+gender <- c("m", "m", "m", "m", "f", "m", "m", "m", "m", "m", "m", "f", 
+    "m", "f", "f", "m", "m", "m", "f", "f", "m", "m", "f", "m", "f", "m", 
+    "m", "f", "m", "f", "m", "m", "f", "m", "f", "f", "f", "f", "m", "m", 
+    "m", "m", "f", "m", "m", "m", "f", "m", "f", "f")
+married <- sample(c("yes", "no"), 50, replace = TRUE)
+enroll <- factor(sample(c(2013, 2014), 50, replace = TRUE, prob = c(0.4, 
+    0.6)))
+theta <- rnorm(50, 0, 0.5)
+exp.theta <- exp(theta)/(1 + exp(theta))
+grade.1 <- round(rowSums(matrix(rep(exp.theta, 10), ncol = 10)) * 10 + 
+    rnorm(50, 2, 6) + 3 * (gender == "f") - 6 * (enroll == 2013))
+tutorial <- round(rbeta(50, 1, 0.5))
+grade.2 <- round(rowSums(matrix(rep(exp.theta, 10), ncol = 10)) * 10 + 
+    rnorm(50, 0, 4) + tutorial * 5 + 4 * (gender == "m") + 6 * (enroll == 
+    2013))
+```
+
+However, make sure you add these variables `within` the local environment of `class.record` such that they do not end up as objects in your global scope (of your Rmd file).
+
+
+**A2:**
+
+```{r}
+set.seed(1)
+last.name <- c("SMITH", "JOHNSON", "WILLIAMS", "JONES", "BROWN", "DAVIS", 
+    "MILLER", "WILSON", "MOORE", "TAYLOR", "ANDERSON", "THOMAS", "JACKSON", 
+    "WHITE", "HARRIS", "MARTIN", "THOMPSON", "GARCIA", "MARTINEZ", "ROBINSON", 
+    "CLARK", "RODRIGUEZ", "LEWIS", "LEE", "WALKER", "HALL", "ALLEN", "YOUNG", 
+    "HERNANDEZ", "KING", "WRIGHT", "LOPEZ", "HILL", "SCOTT", "GREEN", "ADAMS", 
+    "BAKER", "GONZALEZ", "NELSON", "CARTER", "MITCHELL", "PEREZ", "ROBERTS", 
+    "TURNER", "PHILLIPS", "CAMPBELL", "PARKER", "EVANS", "EDWARDS", "COLLINS")
+first.name <- c("JAMES", "JOHN", "ROBERT", "MICHAEL", "MARY", "WILLIAM", 
+    "DAVID", "RICHARD", "CHARLES", "JOSEPH", "THOMAS", "PATRICIA", "CHRISTOPHER", 
+    "LINDA", "BARBARA", "DANIEL", "PAUL", "MARK", "ELIZABETH", "JENNIFER", 
+    "DONALD", "GEORGE", "MARIA", "KENNETH", "SUSAN", "STEVEN", "EDWARD", 
+    "MARGARET", "BRIAN", "DOROTHY", "RONALD", "ANTHONY", "LISA", "KEVIN", 
+    "NANCY", "KAREN", "BETTY", "HELEN", "JASON", "MATTHEW", "GARY", "TIMOTHY", 
+    "SANDRA", "JOSE", "LARRY", "JEFFREY", "DONNA", "FRANK", "CAROL", "RUTH")
+gender <- c("m", "m", "m", "m", "f", "m", "m", "m", "m", "m", "m", "f", 
+    "m", "f", "f", "m", "m", "m", "f", "f", "m", "m", "f", "m", "f", "m", 
+    "m", "f", "m", "f", "m", "m", "f", "m", "f", "f", "f", "f", "m", "m", 
+    "m", "m", "f", "m", "m", "m", "f", "m", "f", "f")
+married <- sample(c("yes", "no"), 50, replace = TRUE)
+enroll <- factor(sample(c(2013, 2014), 50, replace = TRUE, prob = c(0.4, 
+    0.6)))
+theta <- rnorm(50, 0, 0.5)
+exp.theta <- exp(theta)/(1 + exp(theta))
+grade.1 <- round(rowSums(matrix(rep(exp.theta, 10), ncol = 10)) * 10 + 
+    rnorm(50, 2, 6) + 3 * (gender == "f") - 6 * (enroll == 2013))
+tutorial <- round(rbeta(50, 1, 0.5))
+grade.2 <- round(rowSums(matrix(rep(exp.theta, 10), ncol = 10)) * 10 + 
+    rnorm(50, 0, 4) + tutorial * 5 + 4 * (gender == "m") + 6 * (enroll == 
+    2013))
+class.record$last.name <- last.name
+class.record$first.name <- first.name
+class.record$gender <- gender
+class.record$married <- married
+class.record$enroll <- enroll
+class.record$theta <- theta
+class.record$exp.theta <- exp.theta
+class.record$grade.1 <- grade.1
+class.record$grade.2 <- grade.2
+class.record$tutorial <- tutorial
+```
+
+**Q3:** Read the following letter:
+
+```{r, eval = FALSE}
+cat(
+'Dear  Mr SMITH
+  
+You have not passed Test 1 (49 points).
+  
+You have passed Test 2 (59 points).
+  
+Sincerely,
+  
+the Dean of the Faculty.
+'
+)
+```
+
+Write an R function in which this letter can be personalized easily for every student of `class.record`. The function should know
+- whether to use Mr, Mrs, or Ms
+- whether to tell that the student did or did not pass test1 and test2 
+- what grades the student obtained for test1 and test2
+
+Last, the function saves the written letter as a `.txt` file of the form: `FirstnameStudent_LastnameStudent.txt`
+
+Use this function to generate all 50 .txt files.
+ 
+**A3:**
+
+The Google R style function:
+
+```{r}
+title <- function(data = class.record){
+title <- NULL
+    if(data$gender == 'm') {
+        title <- 'Mr'
+    } else {
+      if(data$married == 'yes') {
+        title <- 'Mrs'
+      } else {
+      title <- 'Ms'
+      }
+    }
+return(title)
+}
+result.1 <- function(data = class.record) {
+  result.1 <- NULL
+  if(data$grade.1 >= 60) {
+    result.1 <- 'passed'
+  } else {
+    result.1 <- 'not passed'
+  }
+  result.1
+}
+
+result.2 <- function(data = class.record) {
+  result.2 <- NULL
+  if(data$grade.2 >= 60) {
+    result.2 <- 'passed'
+  } else {
+    result.2 <- 'not passed'
+  }
+  result.2
+}
+result.2(class.record[1, ])
+
+
+WriteLetter <- function(data) {
+  title <- title(data)
+  result.1 <- result.1(data)
+  result.2 <- result.2(data)
+  name.1 <- paste0(data$first.name, '_',data$last.name)
+  name.txt <- paste0(name.1, '.txt', sep = '')
+  txt <- with(data, 
+              cat('Dear ', title, ' ',last.name, '\n', 
+                  'You have ', result.1, ' Test 1 ', 
+                  '(', grade.1, 'points).', '\n',
+                  'You have ', result.2, ' Test 2 ', 
+                  '(', grade.2, 'points).', '\n',
+                  'Sincerely,', '\n',
+                  'the Dean of the Faculty.', sep = '',
+                  file = name.txt, append = TRUE))
+}
+WriteLetter(class.record[3,])
+```
+
+Writing the letter for all 50 students:
+
+```{r, label= letter, eval = FALSE}
+for(i in 1:50) {
+  WriteLetter(class.record[i, ])
+}
+```
+
+
+# Testing and Computational efficiency.
+
+**Q4:** Visualize differences in the grade process
+
+Make one `ggplot2` visualization in which you show two boxplots of the difference between the `grade.2` and `grade.1` scores for each year of enrollment. Furthermore, include `jittered` points which indicate by color intensity the value of the theta (= latent ability for the tests) of each student.  
+
+**A4:**
+
+```{r, fig.show = TRUE}
+library(ggplot2)
+ggplot(data = class.record, aes(x = enroll,y = grade.1 - grade.2)) +
+  geom_boxplot() + 
+  geom_jitter(aes(color = theta), alpha = 0.5)
+```
+
+
+
+**Q5:** Test the differences in grade process
+
+Is there a significant difference between the class of 2013 and 2014 in the grade process from `grade.1` to `grade.2`? Use significance level $\alpha$ = 0.05 and use the functions `lm` and `summary`. Interpret and report your conclusion from the R code results.
+
+**A5:**
+
+```{r}
+obj.lm <- lm(data = class.record, (grade.2 - grade.1) ~ enroll)
+summary(obj.lm)
+```
+
+
+
+**Q6:** Compare `Anova` and `anova`
+
+To test whether there is a difference between the two enrollment groups (2013, and 2014) we can conduct an Analysis of Variance (ANOVA). In an ANalysis Of VAriance the variance of the mean between the groups is larger than the variance within the groups. If so, and if the difference is large enough, then there is reason to think that the
+groups differ in their mean.
+
+```{r, eval = FALSE}
+library(car)
+car::Anova(obj.lm)
+stats::anova(obj.lm)
+```
+
+Which of the two functions is more efficient?
+
+**A6:**
+
+```{r}
+system.time(replicate(500, Anova(obj.lm)))
+system.time(replicate(500, anova(obj.lm)))
+```
+
+
+
+
+**Q7*: Profile `Anova` and `anova` using `Rprof()` and make a quick comparison between the two. 
+
+*Hint:* Note that the `total.time` and sampling time will be rounded to zero. Hence, take a look at the `self.pct` and the `$ sampling.time`.
+
+**A7:**
+
+```{r}
+Rprof(filename = 'anova.out', line.profiling = TRUE)
+invisible(replicate(1000, anova(obj.lm)))
+Rprof(NULL) # close profiler 
+obj.prof <- summaryRprof(filename = 'anova.out', lines = 'both')
+```
+
+```{r}
+Rprof(filename = 'Anova.out', line.profiling = TRUE)
+invisible(replicate(1000, anova(obj.lm)))
+Rprof(NULL) # close profiler 
+obj.prof <- summaryRprof(filename = 'Anova.out', lines = 'both')
+```
+
+
+
+**Q8:** Which two reasons can explain why it is very difficult, in general, to profile the `Anova` and `anova` functions for improvement of computing efficiency?
+
+
+**A8:**
+
+

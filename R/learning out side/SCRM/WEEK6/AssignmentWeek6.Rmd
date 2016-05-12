@@ -1,0 +1,56 @@
+---
+title: "Assignment 6"
+author: "SCR team"
+date: "11 Dec 2014"
+output: beamer_presentation
+---
+
+
+#Assignment week 6| Create a presentation in Rstudio using R markdown.
+
+##Instructions 1 and 2
+- Make a group of two to four students (this group may be the same as in the Linear Models course). Or ask us before Friday, December 12, 16.00 hours to work on your own.
+
+- Create a 10-15 minutes presentation in Rstudio, you can start from the current file.
+Choose a topic for your presentation, e.g.
+
+    + R profiling of (own) model solutions of any of the assginments
+    + a topic you still have difficulties with
+    + a chapter from the book of Matloff, 
+    + or the case study of the Linear Models course, but put extra focus on the R code!
+    + or a topic of your own choice (ask before 13.00 hours Friday, 04 december)
+
+The presentation has to:
+
+- include R code chuncks;
+
+- be of duration length of plus or minus 10 minutes;
+
+- follow the report requirements.
+
+
+##Instructions 4 and 5
+
+Create (a document with) notes for each slide that the presenter will use.
+
+You do not need to present the presentation. The instructors will present one (or at most two) of the presentations in the lecture of week 7. In that week, all the presentations will be available on blackboard too.
+
+##Instruction 6
+
+- Upload the presentation (and the file) with notes on Blackboard, before Wednesday, December 09, 21.00h.
+
+- Your presentation will be judged by the instructors with a "pass" or no "pass".
+
+
+
+## Possibly useful links:
+
+http://cpsievert.github.io/slides/markdown/
+
+http://rpackages.ianhowson.com/cran/rmarkdown/man/ioslides_presentation.html
+
+http://rpubs.com/mansun_kuo/24330
+
+https://code.google.com/p/io-2012-slides/
+
+https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code

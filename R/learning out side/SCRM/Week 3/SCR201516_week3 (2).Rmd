@@ -1,0 +1,732 @@
+---
+title: "Lecture 3 SCR"
+subtitle: Basics in R programming
+runtime: shiny
+output:
+  ioslides_presentation:
+    keep_md: yes
+    toc: yes
+mode: standalone
+---
+
+# Assignments
+
+- Reciprocal Feedback
+
+- Grades   
+
+- Schedule   
+
+
+## Recap Week 2
+
+**Chapter 2: Vectors**   
+- ```length(c(1, "a", NULL, NA))```      
+
+
+**Chapter 3: Matrices and arrays**   
+- Unintended dimension reduction   
+  
+**Chapter 4: Lists**   
+- List indexing     
+
+- Applying functions to lists   
+
+
+
+
+# Week 3 Topics | Basics in R programming
+
+Dataframes continued...
+
+Factors & Tables
+
+Loops
+
+Functions
+
+
+## Week 3 Learning objectives
+
+- Obtain a statistical programmers' working strategy
+
+- Recognize trickyness of factors and tables.
+
+- Transformation and manipulation of data structures
+
+- Identify the difference and usefulness of Implicit and Explicit loops.
+
+- Write (Google's R style) functions
+
+
+
+##Content of today
+
+**11.15 - 12.00: Dataframes, Factors, Tables, Implicit Loops**
+
+
+**12.15 - 13.00: Lab meeting**
+
+  
+**13.45 - 14.30: Implicit Loops, Explicit Loops, Functions**
+
+
+**14.45 - 15.30: Lab meeting**
+
+
+## How to ask a question:
+
+On blackboard I have put the help.pdf, and the Getting-Help-video-lecture from the Coursera course in R programming [(Data Science specialization)](http://jhudatascience.org/education/).
+
+
+# Working Strategy
+
+The graduate will be able to recognize gaps in his/her knowledge and to find the resources to fill these
+
+
+## Working strategy / Time management
+
+- Translate problem into little steps and smaller objects (sometimes without overview)   
+
+- Go for the easy solution first (vectorize later...)   
+
+- Trial and Error / Helpfile first / the Internet
+
+
+<div class="centered">
+![](http://gifs.gifbin.com/1236681924_snail_transformers.gif)
+</div>
+
+# Working Strategy
+
+The graduate will be able to recognize gaps in his/her knowledge and to find the resources to fill these
+
+
+# Chapter 5: | Data frames
+
+## Introduction Data frames
+
+5.1  Creating Data Frames
+
+5.2  Matrix-Like Operations
+
+*5.3  Merging Data Frames (self-study, important too!)*
+
+5.4  Applying functions to Data Frames
+
+
+
+## Creating Data Frames
+ 
+Data frames have properties of lists AND matrices... 
+
+```{r, datafr1}
+N <- 10
+dfram <- data.frame(row.names = 1:N)
+dfram$V1 <- c(1:9, NA)
+dfram[[2]] <- c(NA, letters[1:9])
+dfram[, 3] <- colors()[1:10]
+dfram[, "V4"] <- 10:1
+str(dfram)  # view structure of dfram
+```
+
+
+## List/Matrix-Like Operations
+
+Which is List-like, which is Matrix-like? 
+
+```{r, eval = FALSE}
+class(dfram[["V1"]])
+```
+
+```{r, eval = FALSE}
+class(dfram[, "V1", drop = FALSE])
+```
+
+```{r, eval = FALSE}
+class(dfram[, "V1"])
+```
+
+```{r, eval = FALSE}
+class(dfram["V1"])
+```
+
+
+<!-- twee slides en data weergeven?-->
+## Matrix-Like Operations
+
+Would these code chunks work? When would it (not)?
+
+```{r, eval = FALSE}
+apply(X = dfram, MARGIN = 2, FUN = mean, na.rm = TRUE)
+```
+
+```{r, eval = FALSE}
+apply(X = dfram, MARGIN = 2, FUN = print)
+```
+
+```{r, eval = FALSE}
+cbind(dfram, dfram[order(dfram$V4)[-4], ])
+```
+
+```{r, eval = FALSE}
+rbind(dfram, dfram)
+```
+
+
+## Matrix-Like Operations
+
+Would these code chunks work? When would it (not)?
+
+```{r, eval = TRUE}
+apply(X = dfram, MARGIN = 2, FUN = mean, na.rm = TRUE)
+```
+
+
+## Matrix-Like Operations
+
+Would these code chunks work? When would it (not)?
+
+```{r, eval = FALSE}
+apply(X = dfram, MARGIN = 2, FUN = mean, na.rm = TRUE)
+```
+
+```{r, eval = TRUE}
+apply(X = dfram, MARGIN = 2, FUN = print)
+```
+
+## Matrix-Like Operations
+
+Would these code chunks work? When would they (not)?
+
+```{r, eval = TRUE}
+cbind(dfram, dfram)
+```
+
+```{r, eval = TRUE}
+rbind(dfram, dfram)
+```
+
+
+
+## List-Like Operations
+
+How about these implicit loops? 
+
+```{r, eval = FALSE}
+lapply(X = dfram, FUN = mean, na.rm = TRUE)
+```
+
+```{r, eval = TRUE}
+sapply(X = dfram, FUN = mean, na.rm = TRUE)
+```
+## Extracting from Data Frames
+
+Within in a 'local' data environment.
+
+```{r, eval = TRUE}
+with(data = dfram, expr = (V1 > 3) & (V4 > 3))
+```
+
+```{r, eval = TRUE}
+subset(x = dfram, subset = V1 > 3 & V4 > 3, select = c(1, 3, 4))
+```
+
+## ```stringsAsFactors```
+ 
+Data frames have properties of lists AND matrices... 
+
+```{r, datafr3}
+V1 <- c(1:9, NA)
+V2 <- c(NA, letters[1:9])
+V3 <- colors()[1:10]
+V4 <- 10:1
+dfram <- data.frame(V1, V2, V3, V4, stringsAsFactors = FALSE)
+str(dfram)  # view structure of dfram
+```
+
+
+
+
+# Chapter 6: | Factors and Tables
+
+## Factors and Tables
+
+6.1  Factors and Levels
+
+6.2  Common Functions used with Factors
+
+6.3  Working with Tables
+
+6.4  Other Factor and Table-Related functions
+
+
+
+## Factors and levels
+
+Factors in R more than only an annoyance? [See Stackoverflow](http://stackoverflow.com/questions/3445316/factors-in-r-more-than-an-annoyance)
+
+Many cases where strings end up in factors: 
+```{r}
+dfram <- data.frame(V1, V2, V3, V4)
+str(dfram)
+```
+
+Also with functions as `read.table` where `StringsAsFactors = TRUE`
+
+
+
+## Factors and levels
+
+Main annoyance?
+
+```{r, factlevels1}
+xf <- factor(1:5)
+str(xf)
+xf[6] <- 6
+```
+
+Need to set levels again
+
+```{r, factlevels2}
+xff <- factor(xf, levels = 1:6)
+xff[6] <- 6
+```
+
+
+
+## Factors and levels
+
+```{r}
+IQ <- rnorm(20, 100, 15)
+brks <- c(round(min(IQ - 1)), 85, 115, round(max(IQ + 1))) 
+catIQ <- cut(x = IQ, breaks = brks, 
+             labels = c("L","M","H"),
+             include.lowest = TRUE, right = FALSE)
+catIQ
+str(catIQ)
+```
+
+
+## Tables / Common functions
+
+```{r, tapply}
+require(stats)
+groups <- as.factor(rbinom(32, n = 5, prob = 0.4))
+tab1 <- tapply(groups, groups, length)
+tab1
+```
+
+Which is almost the same as:
+```{r}
+tab2 <- table(groups)
+```
+
+
+## Tables / Common functions
+
+
+```{r}
+class(tab1)
+class(tab2)
+```
+
+
+## Common function: split
+
+An example from the help file of the function split. We would like to normalize the Ozon variable separately for each month.
+
+Let's do this one together...
+
+```{r}
+?airquality
+g <- airquality$Month
+#class(g)
+?split
+l <- split(airquality, g)
+l <- lapply(X = l, transform, Oz.Z = scale(Ozone))
+aq2 <- unsplit(l, g)
+with(aq2, tapply(Oz.Z,  Month, sd, na.rm = TRUE))
+```
+
+## Recap:
+
+- Data Frames
+
+- Factors
+
+- Tables
+
+What are implicit looping functions?
+
+
+
+
+# Labmeeting 1
+
+
+
+# Chapter 7: | R Programming Structures
+
+
+
+## R Programming Structures
+
+
+7.1  Control Statements
+
+7.2  Arithmetic and Boolean Operators and Values (mostly covered)
+
+Functions:
+
+- 7.3  Default values for Arguments 
+
+- 7.4  Return Values
+
+- 7.5  Functions are objects
+
+- 7.6  Environment and Scope Issues
+
+<!-- 7.7 - 7.10: self study -->
+
+
+
+
+## 7.1 Control statements
+
+
+- Loops:
+  +  `for()`: loop over a sequence of values, e.g., iterations
+  +  `while()`: loop as long as a prespecified condition is satisfied
+  +  `replicate()`: replicate a number of times
+
+- Control flow:
+  +  `if(){}else{}`: standard control flow
+  +  `ifelse()`: conditional element selection (vectorized version) 
+  +  `switch()`: select one of a list of alternatives (not being discussed)
+
+
+## 7.1 Three things about for loops
+
+Draw 5 values from a standard normal populations, a for loop example
+
+```{r}
+set.seed(20141120)
+x <- numeric()
+for(i in 1:5){
+      x[i] <- rnorm(1)
+}
+x
+```
+
+A side effect is that the variable `i` still exists after the loop has concluded and it has the value of the last element of vector that the loop was evaluated for.
+
+
+
+## 7.1 Three remarks about for loops
+
+**1.** Avoid growing objects!! Better write as follows:
+
+```{r}
+set.seed(20141120)
+x <- numeric(5)
+for(i in 1:5){
+      x[i] <- rnorm(1)
+}
+x
+```
+
+
+
+## 7.1 Three remarks about for for-loops
+
+**2.** if you can use implicit loop functions (`sapply`,`lapply`, `apply`, `rowSums`, `rowMeans`), go for it!
+
+```{r}
+set.seed(20141120)
+sapply(1:5, function(x) rnorm(1))  # see the implicit loop?
+```
+
+**3.** Use the power of Vectorization! (When possible)
+```{r}
+set.seed(20141120)
+rnorm(5)
+```
+
+[interesting (more advanced) link](http://stackoverflow.com/questions/5533246/why-is-apply-method-slower-than-a-for-loop-in-r)
+
+## 7.1 When use for-loop in R?
+
+- When iterations depend upon each other! (See exercises lab meeting 2 and assignment). E.g. this happens in case you need updated objects from previous **iteratons** in the next iteration.
+
+- Also, many times it is easy code to start with before you go to clever programming with vectorization or implicit loops (time management & working strategy).
+
+
+## 7.1 While and Repeat
+
+```{r}
+i <- 1
+while (i <= 10) {
+    i <- i + 4
+}
+i
+```
+
+```{r}
+i <- 1
+while (TRUE) {
+    i <- i + 4
+    if (i > 10) 
+        break
+}
+i
+```
+
+## 7.1 While and Repeat
+
+```{r}
+i <- 1
+while (TRUE) {
+    i <- i + 4
+    if (i > 10) 
+        break
+}
+i
+```
+
+
+```{r}
+i <- 1
+repeat {
+    i <- i + 4
+    if (i > 10) 
+        break
+}
+i
+```
+
+## 7.1 While and Repeat
+
+```{r}
+i <- 1
+repeat{
+  i <- i + 4
+  if(i > 10) break
+  }
+i
+```
+
+Restrict the number of iterations using a for loop:
+```{r}
+i <- 1
+for (it in 1:10) {
+    i <- i + 4
+    if (i > 10) 
+        break
+}
+i
+```
+
+Could you write a similar while loop also including restrictions?
+
+
+## 7.1 if-else / ifelse()
+
+`ifelse()`
+
+```{r}
+x <- 1:8
+y <- ifelse(x%%2 == 1, "odd", "even")
+y
+```
+
+
+## 7.1 if-else / ifelse()
+
+if-else, non-vectorized
+
+```{r}
+x <- matrix(c(NA, 1:11), 6, 2)
+if (any(is.na(x))) {
+    x <- t(na.omit(x))
+} else {
+    x <- t(x)
+}
+x
+```
+
+## 7.1. Checks / Recap
+
+- Three remarks about for-loops?
+
+- Implicit loop vs explicit loop, when?
+
+- When `if(){} else {}` instead of `ifelse()`?
+
+
+# Functions
+
+7.2-5 Functions
+
+- Default values for Arguments 
+
+- Return Values
+
+- Functions are objects
+
+
+7.6  Environment and Scope Issues
+
+
+## 7.2-5 Functions
+
+We have seen:
+
+```{r}
+oddcount <- function(x) {
+    k <- 0  # assign 0 to k
+    for (n in x) {
+        if (n%%2 == 1) 
+            k <- k + 1
+    }
+    return(k)
+}
+```
+
+Here, `function(){}` is a built-in generic ```R``` function.
+
+
+## Google's R style guide
+
+Let's take a look at the example function in the [Google's  R style guide](https://google-styleguide.googlecode.com/svn/trunk/Rguide.xml)
+
+```{r, Glglexamp, eval = TRUE, message = FALSE, echo = FALSE}
+CalculateSampleCovariance <- function(x, y, verbose = TRUE) {
+  # Computes the sample covariance between two vectors.
+  #
+  # Args:
+  #   x: One of two vectors whose sample covariance is to be calculated.
+  #   y: The other vector. x and y must have the same length, greater than one,
+  #      with no missing values.
+  #   verbose: If TRUE, prints sample covariance; if not, not. Default is TRUE.
+  #
+  # Returns:
+  #   The sample covariance between x and y.
+  n <- length(x)
+  # Error handling
+  if (n <= 1 || n != length(y)) {
+    stop("Arguments x and y have different lengths: ",
+         length(x), " and ", length(y), ".")
+  }
+  if (TRUE %in% is.na(x) || TRUE %in% is.na(y)) {
+    stop(" Arguments x and y must not have missing values.")
+  }
+  covariance <- var(x, y)
+  if (verbose)
+    cat("Covariance = ", round(covariance, 4), ".\n", sep = "")
+  return(covariance)
+}
+```
+
+```{r}
+class(CalculateSampleCovariance)
+```
+
+## 7.2-5 Functions
+
+
+```{r}
+formals(CalculateSampleCovariance)
+```
+
+```{r}
+args(CalculateSampleCovariance)
+```
+
+## 7.2-5 Functions
+
+```{r}
+body(CalculateSampleCovariance)
+```
+
+
+## 7.6 Scope issues
+
+An example of Scope Hiearchy. Let's make the following function:
+
+```{r, eval = FALSE}
+a <- 3
+sumab <- function(b) {
+    ab <- a + b
+    a <- 4
+    return(ab)
+}
+sumab(3)
+a
+```
+
+## 7.6 Scope issues
+
+`R_GlobalEnv` / *top level*
+
+```{r, eval = FALSE}
+ls()
+rm(list = ls())
+```
+
+Would it be smart to have `rm(list = ls())` as a code chunk in every .Rmd report?
+
+
+
+## 7.6 Scope
+
+Remember the code...
+
+```{r, eval = FALSE}
+tab1 <- with(aq2, tapply(Oz.Z,  Month, sd, na.rm = TRUE))
+```
+
+.... Also a local scope idea.
+
+
+## 7.2-5 Average up to
+
+\[ \mu_j = j^{-1} \sum^{j}_{i =1} x_i, \qquad \qquad x = \{x_1, \ldots , x_n\}, j = 1 \ldots, n\]
+
+```{r}
+AverageUpTo <- function(x, j, na.rm = FALSE) {
+    if (na.rm == TRUE) {
+        x <- na.omit(x)
+    }
+    out <- na.fail(j^-1 * sum(x[1:j]))
+    return(out)
+}
+```
+
+## Recap
+
+- For loops / Implicit loops / While loops
+
+- Functions
+
+- Scope / Environment
+
+
+# Recap  
+
+- All Relevant Data Structures (for this Course)
+
+- Explicit / Implicit Looping / Vectorized code
+
+- Functions / Scope / Environment
+
+
+# Next time
+
+- Nynke Krol (CBS / Young Statisticians)
+
+
+# Labmeeting 2 | Exercises + Assignment
+
+
+

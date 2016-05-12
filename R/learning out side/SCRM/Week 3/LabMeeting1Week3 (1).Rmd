@@ -1,0 +1,311 @@
+---
+title: "SCR Lab meeting 1 Week 3"
+output:
+  pdf_document:
+    keep_tex: yes
+---
+
+
+
+# 1. SWIRL
+
+If you haven't done so yet, do from the R programming course in `swirl()` the lessons "Looking at Data" and "vapply and tapply". If you haven't done the "lapply and sapply", please do so too.
+
+
+# 2. Factors and Preparing Data Frames
+
+Consider the following data frame:
+
+```{r, label= preps}
+set.seed(20141120)
+dat <- data.frame(
+  id = sample(gl(20,5), replace = TRUE),
+  y = rnorm(100,10),
+  time = rep(1:5, 20),  
+  gender = factor(NA, levels = 1:3,
+                  labels = c('male', 'female', 'trans')
+                  ),
+  age = NA,
+  treat = factor(NA, levels = 1:3,
+                  labels = c('placebo','active','control'))
+  )
+dat <- dat[order(dat$id), ] # order the rows of dat by id
+```
+
+*Read de above code carefully and look at the help file for functions you're not familiar with. If the help file is not that clear, than look at the examples in the help file, or examples on internet to see what you can do with these functions.*
+
+
+**2a.** Assign at random the male or female gender to each id number and assign randomly a placebo or active treatment to each id number. Keep the class structure of the factors intact!
+
+
+```{r, answ2a, eval = FALSE}
+# replace the dots, remove this comment, and set the chunk to evaluate
+gndr.att <- attributes(dat$gender)
+dat$gender <- sample(1:3, 100, replace = TRUE)[dat$id]
+attributes(dat$gender) <- gndr.att
+
+trt.att <- attributes(dat$treat)
+dat$treat <- sample(1:3, 100, replace = TRUE)[dat$id]
+attributes(dat$treat) <- trt.att
+
+```
+
+*Hint: this code does not work:*
+```{r, label = exmp2a, eval = FALSE}
+gndr.att <- attributes(dat$gender)
+dat$gender <- sample(c("male", "female"), 100, replace = TRUE)[dat$id]
+attributes(dat$gender) <- gndr.att
+```
+
+
+**2b.** Now let's give our patients an age which makes sense according to the time of measurement:
+
+```{r, answ2b, eval = FALSE}
+dat$age <- unlist(
+  sapply(X = unique(dat$id), # line 4
+    FUN = function(i) { 
+      age.id <- sort(sample(x = 18:55, size = 5, replace = TRUE)) # line 1
+      out <- age.id[dat$time[dat$id == i]] # line 2
+      return(out)
+      } # line 3.
+  )
+) # line 5
+```
+
+Describe what is happening at each line:
+
+- line 1: ....
+
+- line 2: ....
+
+- line 3: ...
+
+- line 4: ...
+
+- line 5: ...
+
+
+**2c.** Based on `age` create a factor `cage` that takes the values 
+  * 1. if \(18 \leq age < 35 \)
+  * 2. if \(35 \leq age < 45 \)
+  * 3. if \(45 \leq age < 55 \)
+
+Apart from using logical operators, code using the function `cut` is also allowed.
+
+```{r answ2c, eval = FALSE}
+# replace the dots, remove this comment, and set the chunk to evaluate
+dat$cage <- dat$age
+dat$cage[dat$age >= 18 & dat$age < 35] <- 1
+dat$cage[dat$age >= 35 & dat$age < 45] <- 2
+dat$cage[dat$age >= 45 & dat$age < 55] <- 3
+cut <- cut(dat$age, c(18, 35, 45, 55))
+levels(cut) <- c(1,2,3)
+dat$cage <- cut
+```
+
+
+
+**2d.** Based on the factor you defined above create the 3-way contingency table, `tabdat1`, that contains the frequencies for each combination of `gender`, `treat` and category of age (as defined above). Use the function `with()` such that you don't have to write `dat$` three times..
+
+```{r, label = answ2d, eval = FALSE}
+# replace the dots, remove this comment, and set the chunk to evaluate
+tabdat1 <- with(dat, table(treat, gender, cage)) 
+```
+
+**2e.** Did you obtain empty columns and cells? How would you use the `drop` argument to remove those empty rows and columns from your 3-way contingency table? Please do question d again, but use the `drop` argument.
+
+```{r, label = answ2e, eval = FALSE}
+# replace the dots, remove this comment, and set the chunk to evaluate
+tabdat2 <- ...
+```
+
+**2f.** For this table compute the marginal sums for each of the 3 dimensions, then show the three 3-way contigency tables in which the cells represent the percentages of on of the dimensions. 
+
+```{r, label = answ2f, eval = FALSE}
+# replace the dots, remove this comment, and set the chunk to evaluate
+sum1st <- apply(tabdat1, 1, sum)
+sum2nd <- apply(tabdat1, 2, sum)
+sum3rd <- apply(tabdat1, 3, sum)
+
+tb.gnd.pc <- tabdat1 / sum1st * 100
+tb.trt.pc <- ...
+tb.age.pc <- ...
+```
+
+
+**2g.** As you will observe, some subjects have more than one measurements for some time points (i.e. column `time`). Create a new data frame in which these measurements are averaged.
+
+NOTE + HINT: This is a hard question, you might wanna skip it for now due to time... You might want to use the function `tapply` and `duplicated` to ease the answer.
+
+```{r, label = answ2g, eval = FALSE}
+input.dupl <- interaction(dat$id, dat$time)
+new.dat <- dat[.... , ]
+new.dat <- ....
+new.dat$y.new <- na.omit(c(tapply(X = ..., INDEX = list(..., ...), FUN =  mean)))
+```
+
+
+**h.** Add a new column to the `new.dat` data frame that contains the average value of `y` per `id` (i.e., for each subject the average should be replicated the number of his/her measurements)
+
+```{r, label= answ2h, eval = FALSE}
+dat$mean.y <- tapply(dat$y, dat$id, mean)[dat$id]
+# or
+dat$mean.y <- ave(dat$y, dat$id)
+?ave
+```
+*Hint: use the function tapply.*
+
+
+# 3. Rewrite more Efficiently 
+
+Rewrite the following piece of code more efficiently in one or two lines. With the implicit looping functions as `sapply`, `lapply` you could make it already more efficient, but eventually **no loops** are needed!
+
+**3a.** We want to create 2 vectors of length 100, with random numbers from a standard normal distribution.
+
+*inefficient code:*
+```{r, label = wrong3a, eval = TRUE}
+x <- y <- NULL
+for (i in 1:100) {
+    x[i] <- rnorm(1)
+    y[i] <- rnorm(1, 2, 3)
+}
+```
+
+```{r, label = right3a, eval = TRUE}
+x <- rnorm(100)
+y <- rnorm(100)
+```
+
+
+**3b.** Let's generate 100 samples, each of size 10 from which all data points are i.i.d. from a standard normal:
+
+```{r, label = wrong3b, eval = TRUE}
+X <- matrix(0, nrow = 10, ncol = 100)
+for (i in 1:10) {
+    for (j in 1:100) X[i, j] <- rnorm(1)
+}
+```
+
+```{r, label = right3b, eval = TRUE}
+X <- matrix(rnorm(1000), ncol = 100)
+```
+
+
+**3c.** Let's go back to object `x` and `y`. First we want to find the minimum for each pair of elements,
+
+*inefficient code:*
+```{r, label = wrong3c, eval = FALSE}
+result1 <- numeric()
+for (i in 1:100) {
+    result1[i] <- min(x[i], y[i])
+}
+result1
+```
+
+```{r, label= right3c, eval = TRUE}
+res <- apply(cbind(x, y), 1, min)
+```
+
+**3d.** then we want to calculate the sum of the ith element of 'x' with the (i+1)th element of 'y', and store the result in a variable
+
+*inefficient code:*
+```{r, label= wrong3d, eval = TRUE}
+result2 <- numeric()
+for (i in 1:99) {
+    result2[i] <- x[i] + y[i + 1]
+}
+# result2
+```
+
+```{r, label = right3d, eval = TRUE}
+re2 <- x[-100] + y[-1]
+```
+
+**3e.** Finally, we want to create the matrix with ijth element equal # to 3 times the ith element of 'x' minus 2 times the square of # the jth element of 'y'
+
+*inefficient code:*
+```{r, label = wrong3e, eval = FALSE}
+result3 <- matrix(0, 100, 100)
+for (i in 1:100) {
+    for (j in 1:100) {
+        result3[i, j] <- 3 * x[i] - 2 * y[j]^2
+    }
+}
+```
+
+Hint: First just come up with better code... Eventually...this is possible in one line, check the help file of the function `outer`. Look at the helpfile of the function "?outer". If then its not clear (was not for Maarten,e)...Then look for great examples available on the world wide web :-).
+
+```{r, label= right3e, eval = FALSE}
+?outer
+result3 <- outer(...., function(0) {.....})# one line code framework example
+```
+
+
+
+
+# Extra Exercises if you'd like to practice more..
+
+
+## Extra Task 1
+
+
+Define a matrix containing 1000 responses for 10 items, coming from the uniform distribution in (-1,1) and compute the sample correlation matrix as follows:
+
+```{r, E1cmat, eval = TRUE}
+set.seed(10112008)
+matD <- matrix(runif(1000 * 10, -1, 1), 1000, 10)
+cmat <- cor(matD)
+```
+
+Now, for each of the 10 items, we want to get the top 4 items that have the highest correlation with it (excluding itself) and generate a data frame with 3 columns like (`ID`,`ID2`,`cor`), where ID is those 10 items each repated 4 times, `ID2` is the top 4 correlated items with `ID`, and `cor` is the correlation of `ID` and `ID2`.
+
+Note that indices from a matrix go column wise, so row 1 and column 2 for this matrix have index 
+```{r, label = E1hint1, eval = FALSE}
+cmat[1, 2] == cmat[11]
+tapply(1:20, rep(1:2, each = 10), function(x) head(x, n = 5)[-1])
+```
+
+And a nice trick one could take into account for subsetting one could take into account is the following:
+
+```{r, label= E1hint2, eval = FALSE}
+indx <- cbind(rep(1, 10), 1:10)
+cmat[indx]
+```
+
+Last hint, see whether you could use the function `order()` for more than one column in a data.frame or matrix. Look at the helpfile or `order` or on the world wide web.
+
+
+```{r, label = E1answer, eval = FALSE}
+apply(abs(cmat, 1, order)
+```
+
+
+
+
+## Extra Task 2
+
+We have the following data frame:
+
+```{r, label = E2prep1}
+set.seed(2009) 
+w <- runif(10) 
+x <- runif(10) 
+y <- runif(10) 
+z <- runif(10) 
+DF <- data.frame(a = w, b = x, c = y, d = z) 
+```
+
+We define two intervals using the four columns of the data frame, namely we define the intervals [min(a,b), max(a,b)], and [min(c,d), max(c,d)]. Add a new logical column in the data frame, which should be TRUE if the intervals overlap, and FALSE otherwise. The output should look like:
+
+```{r, label = E2prep2}
+DF$overlap <- with(DF, pmax(a, b) >= pmin(c, d))
+head(DF)
+```
+
+Use logical operators and if you want to be more elegant, use the functions `pmin` and `pmax`.
+
+```{r, label = E2, eval = FALSE}
+```
+
+```{r, label = E2a, eval = FALSE}
+```

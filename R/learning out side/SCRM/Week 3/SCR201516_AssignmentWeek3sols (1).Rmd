@@ -1,0 +1,392 @@
+---
+title: "SCR Assignment 3 on k-means"
+subtitle: "The Bird is the Word"
+author: "SCR-team"
+date: "November 12, 2015"
+graphics: yes
+output: 
+    pdf_document:
+        fig_caption: true
+---
+
+
+\vskip 1cm   
+
+
+----
+
+\begin{center}
+NAME HERE
+
+ULCN HERE
+\end{center}
+
+----
+
+
+\newpage 
+
+
+# Compress a picture of an Ara ararauna (= Parrot)  
+## Using and programming a k-means algorithm
+
+For this assignment, you will apply and implement a k-means clustering algorithm to compress a picture. 
+
+In case you get stuck, first try to find your way on the world wide web for videos, visuals, or whatever kind of explanations.
+
+
+## 1 Transform RGB-array to a data frame
+
+Download the `Bird.png` picture from blackboard and make sure the picture is in the same directory as this .Rmd file. The Bird.png is a PNG picture of 283 x 425 pixels. Install the package `png` and then read the PNG picture into the object `img` with the function `png::readPNG` in the following code chunk:
+
+
+```{r, eval = TRUE}
+RGB <- c("red", "green", "blue")
+require(png)
+img <- readPNG('Bird.png')
+```
+
+## 1.1 What is your `img` object?
+
+Notice that the class of `img` is an array of three dimensions. Or, you could see it also as an object consisting of four different R(ed), G(reen), B(lue), and Alpha matrices.
+
+What are the intensity values for Red, Green, Blue and Alpha for the pixel in row 25 (index 24 in dimension 1) and column 50 (index 50 dimension 2). Show the values with R code:
+
+```{r}
+paste(c('red', 'green', 'blue', 'alpha'), ' = ', round(img[25, 50, ], 4))
+```
+
+Run the following the code chunk (but keep it on `eval = FALSE` in your solutions!). 
+
+```{r, label = blackcheck, eval = FALSE}
+img.black <- array(0, dim(img)
+img.black[,,4] <- 1
+writePNG(blackimg, target = 'blackimg.png')
+```
+
+After running the code, or perhaps before already, you notice(d) that the pixels, with alpha = 1 (no transparancy), and red = 0, green = 0, blue = 0, form a black image.
+
+
+## 1.2 Transform RGBA array to a data.frame
+
+Most statistical analyses are conducted on `data.frame` objects. Transform the `array` object into a data frame of 120275 pixels with 6 variables: `row`, `column`, `red`, `green`, `blue` and `alpha`. 
+
+Show in the following code chunk how to do this:
+
+```{r}
+img.df <- data.frame(expand.grid(1:dim(img)[1], 1:dim(img)[2]), sapply(1:dim(img)[3], 
+    function(x) {
+        img[, , x]
+    }))
+colnames(img.df) <- c("row", "column", RGB, "alpha")
+```
+
+
+The head of the data.frame looks like:
+
+```{r, eval = FALSE}
+head(img.df)
+```
+
+```
+  row column        red      green       blue alpha
+1   1      1 0.02352941 0.05098039 0.02352941     1
+2   2      1 0.02352941 0.05490196 0.02745098     1
+3   3      1 0.02352941 0.05098039 0.02352941     1
+4   4      1 0.02745098 0.04313725 0.02352941     1
+5   5      1 0.02352941 0.04705882 0.02352941     1
+6   6      1 0.02352941 0.05098039 0.02352941     1
+```
+
+
+
+## 2 Compress using `stat::kmeans`
+
+Suppose we wish to reduce the amount of information in this picture, say, using only 16 colors. We could pick 16 equally spaced colors in the rainbow (light frequency) spectrum, find their RGBA values, and replace each of the tens of thousands different colors by the one that is closest to one of these 16 groups. Would this be wise? E.g. red and violet are not really present. Furthermore, you can see lots of (almost) black pixels in the pictures. This group is better represented by a mean vector `c(Red = 0, Green = 0, Blue = 0)`. Hence, it makes more sense to find 16 groups that can be best used to describe our data. 
+
+In this exercise we will use a technique called k-means to find k different mean vectors (centroids) in the data (in this case $k$ = 16).
+
+A slightly more mathematical description of k-means can be found in exercise 3.
+
+
+```{r, label = blackcheck, eval = FALSE}
+img.black <- array(0, dim(img)
+img.black[,,4] <- 1
+writePNG(blackimg, target = 'blackimg.png')
+```
+
+
+### 2.1 Apply `kmeans` from the `stats` package
+
+Let us apply the `kmeans` function from the `stats` package on the `red`,`green` and `blue` variables using \(k = 16\).
+
+In this way we can find an acceptable way to compress the picture into 16 colors (the centroids) instead of `r nrow(unique(img.df[, RGB]))` colors.
+
+Save the results of the `kmeans` function in an object:
+
+```{r}
+obj.km <- kmeans(img.df[,RGB], centers = 16)
+```
+
+### 2.2 Make a data.frame with the 16 colors
+
+Extract From the kmeans object, we will extract the 
+
+- centroids, a matrix of 16 centroids with their values for 'red','green', and 'blue' each (`.. $ centers`),
+- and the closest centroid index number for each pixel (an integer vector `..$ cluster`),
+
+to create a new data.frame or matrix object, `cmp1.2d`. The rows are the pixels and the columns are values on 'red','green' and 'blue' again. However, the values for 'red','green' and 'blue' are not the pixel values, but the values of the closest centroid for that pixel:
+
+```{r}
+cmp1.2d <- obj.km$centers[obj.km$cluster, ]
+```
+
+Confirm that you have 16 color only using R code:
+```{r}
+nrow(unique(cmp1.2d[, RGB]))
+```
+
+### 2.3 Make your own first decompressed .png file
+
+We need a three-dimensional array to make our first compressed version of the `Bird.png` picture, using `png::writePNG`. Define an array, `cmp1`, which first will contain `1`'s only, but has exactly the same dimensions as the `img` object. Using a `for loop` fill the `red`, `green` and `blue` values for the pixels accordingly.
+
+*Although it is not necessary to use the row and column numbers of the pixels, they might help you to come up with working code quickly*
+
+In the following code we transform `cmp1.2d` into an array of similar dimensions as he following code shows us how to do that:
+
+```{r}
+cmp1 <- array(1, dim = dim(img))
+for (i in 1:length(RGB)) {
+    cmp1[, , i] <- matrix(cmp1.2d[, i], dim(img)[1:2])
+}
+```
+
+The filename of our first decompressed picture is `BirdCmp1.png`:
+
+```{r}
+writePNG(cmp1, target = "BirdCmp1.png")
+```
+
+![The original picture](Bird.png)   
+
+![Compressed picture using stats:kmeans](BirdCmp1.png)   
+
+\newpage
+
+
+
+
+## 3 Your own K-means clustering function in little steps.
+
+See here an explanation of k-means clustering conform [Wikipedia](https://en.wikipedia.org/wiki/K-means_clustering), but applied to the assignment's context:
+
+Given a set of pixels \(\{ \mathbf{x}_1, \,\mathbf{x}_2, \,\ldots, \,\mathbf{x}_j, \ldots,  \mathbf{x}_n\) \}, where each pixel is a \(3\)-dimensional real vector, containing the values for Red, Green and Blue, \(k\)-means clustering aims to partition the \(n\) pixels into \(k (\leq n)\) sets \(S = {S_1,\, S_2,\, \ldots, \,S_k}\) so as to minimize the within-cluster sum of squares (WCSS) (sum of distance functions of each point in the cluster to the \(K\) center).  
+
+In other words, its objective is to find:
+$$\underset{\mathbf{S}} {\operatorname{arg\,min}} \sum_{i=1}^{k} \sum_{\mathbf x \in S_i} \left\| \mathbf x - \boldsymbol\mu_i \right\|^2$$
+
+where \(\boldsymbol \mu_i\) is a mean vector (a centroid) of the Red Green and Blue points in \(S_i\). Hence, the name k-means is the set of centroids $\{ \boldsymbol \mu_1, \boldsymbol \mu_2, \dots, \boldsymbol \mu_i, \dots, \boldsymbol \mu_k\}$
+
+The algorithm which we will program in steps
+```
+Initialize a set of k-means (**step 1**):
+  
+    - e.g. init.centroids <- InitCentroids(X, k)
+ 
+
+for (iter in 1:maximumiterations) { 
+    
+    
+    - Cluster assignment (**step 2**): 
+    
+      S <- SiOfClosestMu(X, centroids);
+    
+    
+    - Update centroids (**step 3**): 
+    
+      centroids <- computeCentroids(X, S, k);
+    
+    - Check convergence
+    
+      If mu.vectors do not change anymore, break the loop earlier.
+    
+}
+```
+
+
+### 3.1 Generate an initial set of \(k\) means
+
+Write down a function (does not have to be completely Google R style) with which you can obtain centroids as starting values in the algorithm.
+
+The starting values should be generated in a simple way as is done in the `stats:kmeans` function. Select at random $k$ pixels and define them to be your initial centroids.
+
+
+```{r, eval = TRUE}
+InitCentroids <- function(X, k) {
+    # X = data.frame 
+    #K = number of centroids
+    
+    # Returns: an k by ncol(X) dimensional matrix
+    matrix(unlist(X[sample.int(nrow(X), k), ]), nrow = k, byrow = TRUE)
+}
+ 
+```
+
+Check whether the function works properly by showing the structure of the output objects
+
+```{r, eval = TRUE}
+set.seed(20151112)
+centroids <- InitCentroids(X = img.df[, RGB], k = 16)
+str(centroids)
+```
+
+
+
+### 3.2 Find the index/ row number of the closest centroid
+
+Find the index/ row number ($S_i$) of the closest centroid ($\boldsymbol u_i$) for each pixel ($\boldsymbol x_j$). In other words, make a simple function that outputs an integer vector that shows the cluster numbers of the pixels.
+
+Use the squared Euclidean distance ($D_{ij}^2$) to find the closest centroid for a pixel: 
+$$ D_{ij}^2 = \left\| \mathbf x_j - \boldsymbol \mu_i \right\|^2$$
+
+If you wonder what these two sets of two vertical bars in the formula mean, then it could be that you are not familiar yet with the Euclidean norm, Euclidean length or the L2 norm. This definition might help you, the Euclidean length of a pixel can be calculated as follows:
+
+$$ \left\| \boldsymbol{x}_j \right\| := \sqrt{x_{red}^2 + x_{green}^2 + x_{blue}^2 }.$$. 
+
+
+```{r, eval = TRUE}
+SiOfClosestMu <- function(X, centroids){
+    # X = data.frame
+    # centroids = K x 3 matrix or data frame
+  
+    # Returns: integer vector with cluster numbers
+    n <- nrow(X)
+    k <- nrow(centroids)
+    
+    DforC <- sapply(1:k, function(i) {
+        ccX <- X - rep(centroids[i, ], each = n)  #  centroid centered X
+        rowSums(ccX * ccX)  # squared euclidean distance
+    })
+    
+    clst.nr <- apply(DforC, 1, which.min)
+    
+    return(clst.nr)
+}
+```
+
+See whether it works, it could be that few of the cluster numbers are not present yet.
+
+```{r, eval = TRUE}
+clst.nr <- SiOfClosestMu(X = img.df[, RGB], centroids)
+table(clst.nr)
+```
+
+
+### 3.3 Compute Centroids
+
+Given that you know the cluster number ($S_i$) of every pixel $x_j$, calculate the centroids $\{\boldsymbol \mu_i\}^k_{i=1}$. Hence, use as input at least use the output of the function you created. In this function you will calculate the (new) mean for each color ($\boldsymbol u_i$) in every group ($S_i$) of pixels.
+
+Hint: If for a specific centroid \(\boldsymbol \mu_i\) the cluster or partition \(S_i\) is empty, then keep the (previous) centroid \(\mu_i\) as it is.
+
+```{r, eval = TRUE}
+computeCentroids <- function(X, centroids, clst.nr) {
+    # X: data.frame
+    # centroids: K by ncol(X) matrix
+    # clst.nrs: integer vector of length ncol(X)
+
+    k <- nrow(centroids)
+    for (i in 1:k) {
+        if (any(clst.nr == i)) {
+            centroids[i, ] <- colMeans(X[clst.nr == i, ])
+        }
+    }
+    return(centroids)
+}
+```
+
+See whether it works:
+
+```{r, eval = TRUE}
+centroids <- computeCentroids(X = img.df[, RGB], centroids, clst.nr)
+```
+
+
+### 3.4  A nicely programmed Google's R style fuction
+
+Now use the above functions to complete the algorithm and make your own `myKmeans` Google's R style function. Your function must make sure
+
+1. that you can see that the algorithm is iterating,
+2. that it breaks the loop when the overal average of the differences between the centroids from iteration *iter* and iteration *iter - 1* are smaller or equal to `(.Machine$double.eps)^(1/3)`.
+
+```{r, eval = TRUE}
+myKmeans <- function(X, k, totit = 10) {
+  # Computes the k-means of the rows in a data set
+  #
+  # Args:
+  #   X: numeric data.frame object with rows < columns
+  #   k: the number of mean vectors / centroids
+  #   totit: the maximum number of iterations
+  #
+  # Returns:
+  #   A list with two components:
+  #      1. a matrix of the k-means 
+  #      2. an integer vector of cluster label for the rows in X
+
+# initialize centroids
+    centroids <- InitCentroids(X, k)
+    
+    for (iter in 1:totit) {
+        init <- centroids
+        clst.nr <- SiOfClosestMu(X, init)
+        centroids <- computeCentroids(X, centroids, clst.nr)
+        
+        cntr.diff <- mean(abs(init - centroids))
+        cat("Iteration", iter, "of", totit, ": mean centroid difference =", 
+            cntr.diff, "\n")
+        if (cntr.diff < (.Machine$double.eps)^(1/3)) {
+            cat("The algorithm converged, or reached max iterations of ", 
+                totit, "\n")
+            break
+        }
+        
+        # cmp2.d2 <- centroids[clst.nr, ] cmp2 <- array(1, dim(img)) for(i in
+        # 1:length(RGB)){ cmp2[,,i] <- matrix(cmp2.d2[,i], dim(img)[1:2]) }
+        # writePNG(cmp2, target =
+        # paste0('./Allits/BirdCompressedMK',iter,'.png'))
+        
+    }
+    
+    return(list(cluster = clst.nr, centers = centroids))
+}
+```
+
+See whether it works
+
+```{r, eval = TRUE}
+my.km <- myKmeans(X = img.df[, RGB], k = 16)
+str(my.km)
+```
+
+
+
+
+
+## 3.5 Make your own compressed picture
+
+Transform your results of your own `myKmeans` into an array object which you can use in the `png:writePNG` function.  
+
+Write your array object to a png file with your last name in the file name: `paste0("BirdCompressed", yourlastname, ".png")`.
+
+```{r, eval = TRUE}
+cmp2 <- array(1, dim(img))
+for (i in 1:length(RGB)) {
+    cmp2[, , i] <- matrix(cbind(my.km$cen[my.km$clu, ], 1)[, i], dim(img)[1:2])
+}
+writePNG(cmp2, target = "BirdCompressedYourLastName.png")
+```
+
+Also show your created .png file in this Rmarkdown report below:
+
+![Compressed picture using myKmeans](BirdCompressedYourLastName.png)
+
+

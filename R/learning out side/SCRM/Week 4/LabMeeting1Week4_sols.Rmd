@@ -1,0 +1,140 @@
+---
+title: "Labmeeting week 6 - part 1 - solutions"
+author: "SCR-team"
+date: "12 Dec 2014"
+output: pdf_document
+---
+
+#Exercise 1: Create plots of the chi-square distribution 
+
+Inspect the code chunks of the lecture of this morning in which plots of probability density functions were created.
+
+a. Create a graph of a chi-square distribution with df = 10. Complete the code below. Make sure that you set the limits of your y-axis to 0 and 0.30. This can be done by adding ylim = c(0, 0.30) as an argument in your plot function.
+
+```{r, label = exc1}
+xvar <- rchisq(1000, df = 10)
+x_ax <- seq(0, max(xvar), length = 100) 
+
+```
+
+b. Use the function lines() to add more chi-square distributions, differing in number of degrees of freedom, to the graph created in a. Use df = 1, df = 3 and df = 5. Add a suitable legend to the graph.
+
+
+#Solution Exercise 1
+```{r, label = exc1_sol}
+#solution to a
+xvar <- rchisq(1000, df = 10)
+x_ax <- seq(0, max(xvar), length = 100) 
+plot(x_ax, dchisq(x_ax, df = 10), type = "l", xlab = "x value",
+  ylab = "Density", ylim = c(0, 0.30), main = "chi-square distribution")
+#solution to b
+degf <- c(1, 3, 5)
+colors <- c("red", "blue", "darkgreen", "black")
+labels <- c("df = 1", "df = 3", "df = 5", "df = 10")
+for (i in 1 : 3){
+  lines(x_ax, dchisq(x_ax, degf[i]), col = colors[i])
+}
+legend("topright", inset = .05, labels, lty = rep(1, 4), col = colors)
+```
+
+#Exercise 2: Density plots
+
+Read par. 12.1.4 of the book of Norman, pp. 264 - 265. You are going to create the graph shown on page 265, but with a different data set, called "tobit.csv". The variables you use are "read" and "math"
+Enter your code in this R-chunk:
+
+```{r, label = Fig12_4}
+testscores <- read.csv("http://www.ats.ucla.edu/stat/data/tobit.csv")
+summary(testscores) #inspect the data set
+d1 <- density(testscores$read, from = 20, to = 80) 
+d2 <- density(testscores$math, from = 20, to = 80) #complete the code here
+
+```
+
+#Solution Exercise 2
+
+```{r, label = Fig12_4_sol}
+testscores <- read.csv("http://www.ats.ucla.edu/stat/data/tobit.csv")
+summary(testscores) #inspect the data set
+d1 <- density(testscores$read, from = 20, to = 80) 
+d2 <- density(testscores$math, from = 20, to = 80) #complete the code here
+plot(d1, main = "", xlab = "")
+lines(d2)
+```
+
+#Exercise 3: Adding text to a graph with help of the locator() function
+
+a. We are going to add text to the graph created in Exercise 2. Read par. 12.1.8 and 12.1.9 of the book of Matloff, pp. 270 - 271. In stead of the text "Exam 1" and "Exam 2", we use now "read" and "math". To determine the coordinates of the text, use the function locator(). In your console, type locator(2) and use enter. Then, go to the graph you created in Exercise 2 and click on the two points in the graph where you want to put the text. Use these coordinates in the function text().
+
+b. Change the size of the text by varying the parameter "cex" (See also par. 12.2.1 on p. 272 of the book of Matloff).
+
+#Solution Exercise 3
+
+```{r, label = exc3_sol}
+#locator(2)
+plot(d1, main = "", xlab = "")
+lines(d2)
+text(40.5,  0.038, "read")
+text(61.9, 0.034, "math")
+#solution to b
+plot(d1, main = "", xlab = "")
+lines(d2)
+text(40.5,  0.038, "read", cex = 0.6)
+text(61.9, 0.034, "math", cex = 0.6)
+```
+
+
+#Exercise 4: Adding points to a graph and customizing a graph
+
+We are starting from scatch. To erase the graph of exercise 3b, go to Rstudio and click on "Clear All" in the Plots window.
+
+a. We are going to add points to a graph with the function points(). 
+
+```{r, label = addpoints}
+?points() #inspect the help file of points()
+##Perform the first example given in the help file
+plot(-4:4, -4:4, type = "n")  # setting up coord. system
+points(rnorm(200), rnorm(200), col = "red")
+points(rnorm(100)/2, rnorm(100)/2, col = "blue", cex = 1.5)
+```
+
+b. Change the symbol of the points used in the graph created in a, by adapting the parameter "pch" (see helpfile of points)
+
+c. Change the color of the points, by adapting the parameter "col". Use colors() to inspect which colors are available in R.
+
+d. Change the range of the x-axis and y-axis (using xlim and ylim; see also par. 12.2.2, p. 273)
+
+e. Change the labels of the x-axis and y-axis (using xlab and ylab) and create a title above the plot (using main)
+
+
+#Solution Exercise 4
+
+```{r, label = addpoints_sol}
+#solution to b
+plot(-4 : 4, -4 : 4, type = "n")  # setting up coord. system
+points(rnorm(200), rnorm(200), pch = "+", col = "red")
+points(rnorm(100)/2, rnorm(100)/2, pch = "+", col = "blue")
+#solution to c
+plot(-4 : 4, -4 : 4, type = "n")  # setting up coord. system
+points(rnorm(200), rnorm(200), pch = 19, col = "darkgreen")
+points(rnorm(100)/2, rnorm(100)/2, pch = 19, col = "wheat2")
+#solution to d:
+plot(-4 : 4, -4 : 4,  xlim = c(-8, 8),  ylim = c(-8, 8), type = "n")  # 
+points(rnorm(200), rnorm(200), pch = 19, col = "darkgreen") 
+points(rnorm(100)/2, rnorm(100)/2, pch = 19, col = "wheat2")
+#solution to e
+plot(-4 : 4, -4 : 4, type = "n", xlab = "variable X1", ylab = "variable X2")  
+points(rnorm(200), rnorm(200), pch = 19, col = "darkgreen")
+points(rnorm(100)/2, rnorm(100)/2, pch = 19, col = "wheat2")
+
+```
+
+
+##Exercise 5: Make a heat map and save the plot as .pdf
+
+Go to the instruction to make a [heatmap](http://flowingdata.com/2010/01/21/how-to-make-a-heatmap-a-quick-and-easy-solution/).
+Copy the code given on the website in the Rchunk below. Save the final heatmap as a .pdf file: Go to the plots window in Rstudio. Click in the toolbar on Export and choose "Save as PDF".
+
+```{r, label = exc5}
+#enter the code of the website
+```
+

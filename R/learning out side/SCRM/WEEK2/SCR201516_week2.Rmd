@@ -1,0 +1,823 @@
+---
+title: "Lecture 2 SCR"
+subtitle: Main Classes and Functions
+runtime: shiny
+output: ioslides_presentation
+---
+
+
+
+## Recap of week 1
+
+- Relevance of R
+
+- R basic structures 
+
+- Reproducible report
+
+
+# Topics of week 2:| Vectors, Matrices, Arrays and Lists (Ch. 2 - 4)
+
+##Content of today
+
+**11.15 - 12.00: Vectors and Matrices and Arrays (1st half)**   
+
+
+**12.15 - 13.00: Lab meeting**   
+
+  
+**13.45 - 14.30: Matrices and Arrays (2nd half) and Lists**   
+
+
+**14.45 - 15.30: Lab meeting and Peer-review Assignment**   
+
+
+## Week 2 learning objectives 
+
+
+- construct vectors in several ways (using ```c()```, ```:```, ```seq()```, ```rep()```, ```paste()```, ```numeric()```, and ```rnorm()```)
+- construct other data structures from vectors
+- solve computation problems in R with vectors, matrices, arrays, lists and dataframes
+- get insight in the ```*apply()``` family functions
+- write R functions with vectors and/or matrices as input arguments and a list as output
+
+
+# Chapter 2: | Vectors
+
+Creating vectors in R   
+
+Vectorization   
+
+
+## Introduction Vectors 
+
+- **Creating vectors in R** (par. 2.1, 2.4, swirl lesson 2)   
+
+- Vector indexing (self-study par. 2.4.2)   
+
+- Recycling (par 2.3; swirl lesson 1)    
+
+- **Vectorization** (par 2.6)   
+
+- Missing values (par 2.7; swirl lesson 4)  
+
+- Filtering (par 2.8; swirl lesson 5 "subsetting vectors")   
+
+
+## Creating vectors in R (```typeof```)
+
+Use ```c()``` to generate numeric vectors (type = "double") or character vectors 
+
+```{r, label = cfunction_ex2}
+x1 <- c(1, 3, "a", "b"); 
+class(x1)
+typeof(x1)
+```
+
+
+## Creating vectors in R (```typeof```)
+
+Use the ```:``` Operator to generate numeric vectors of type integer or double.
+
+```{r, label=operator_ex1}
+x2 <- 1.5:10.5
+typeof(x2)
+```
+   
+   
+More about ```typeof()``` vs ```class()```? [See  here](http://stackoverflow.com/questions/6258004/r-types-and-classes-of-variables)   
+
+
+
+## Creating vectors in R (continued)
+
+Use the function ```seq()``` or ```rep()``` (swirl lesson 2);   
+
+Use function ```paste()``` to concatenate vector elements without spaces in between:
+
+```{r}
+x3 <- paste(c("a", "b", "c", "d"), collapse = "")
+x3
+```
+or, for example, to create a vector with variable names:
+
+```{r}
+x4 <- paste("X", 1:5, sep = "")
+x4
+```
+
+
+## Creating vectors in R (continued)
+
+Use ```rnorm()``` to generate a random normally distributed variable, for example, with $\mu=10$ and $\sigma=2$ or $\sigma=1$:   
+
+```{r}
+set.seed(350)
+x5 <- rnorm(200, mean = 10, sd = 2)
+x6 <- rnorm(200, 10, 1)
+```
+
+
+## Creating vectors in R (continued)
+
+Use ```rnorm()``` to generate a random normally distributed variable, for example, with $\mu=10$ and $\sigma=2$ or $\sigma=1$:   
+
+
+```{r, fig.height = 3.5, fig.width = 8, echo = FALSE}
+par(mfrow = c(1, 2))
+hist(x5, xlim = c(4, 16), ylim = c(0, 60), breaks = 11, main = "Histogram of x5")
+hist(x6, xlim = c(4, 16), ylim = c(0, 60), breaks = 11, main = "Histogram of x6")
+```
+
+
+## Vectorization
+
+Function that is *vectorized*: a function is applied individually (and memoryless) to each element of a vector.
+
+Examples of vectorized functions:
+
+The functions/operators ```+```, ```*```, ```/```, ```>``` , ```==```, ```&```, ```|``` are good examples. (see book 2.4.1, 2.6.1, 2.10) 
+```{r}
+x <- c(1, 6, 2)
+y <- c(3, 7, 1)
+x > 2 & y > 2
+x[x > 2 & y > 2]
+```
+
+## Vectorized functions:
+
+- The functions ```sqrt()```, ```round()```, ```ifelse()``` (see also 2.6.1, 2.9)
+
+```ifelse()``` changes a logical vector into a character or numeric vector:
+```{r}
+x <- 1:8
+y <- ifelse(x%%2 == 1, "odd", "even")
+y
+z <- ifelse(x%%2 == 1, 1, 0)
+z
+```
+
+## Question time...
+
+Which functions can you use to create a vector?
+
+What is an easy way to generate a vector with 10 zero's?
+
+Which of the below examples does not work? 
+
+```x1 <- 1.3 : 10.3```
+
+```x2 <- a : z```
+
+```x3 <- seq(1 : 5, length = 9)```
+
+
+## Question time continued
+
+Given:
+```{r, eval = FALSE}
+x <- c(6, 3, 9)
+y <- c(3, 3, 10)
+```
+
+Which of the following code is not a vectorized operation?
+
+```
+x + 4
+
+x %*% x
+
+mean(x)
+
+x > 4 & y > 4
+```
+
+# Chapter 3: | Matrices and Arrays
+
+Matrix indexing and filtering   
+
+Applying functions to matrix rows and columns   
+
+Adding and deleting matrix rows and columns   
+
+Unintended dimension reduction   
+
+
+
+## Matrices
+
+- Creating matrices (self-study par. 3.1, swirl lesson 6)
+- Matrix algebra (self-study par. 3.2.1; course linear models)
+- **Matrix indexing and filtering** (par. 3.2.2 and 3.2.3)
+- **Applying functions to matrix rows and columns** (par. 3.3)
+- **Adding and deleting matrix rows and columns** (par. 3.4)
+- Vector / matrix distinction (self-study par. 3.5)
+- **Unintended dimension reduction** (par. 3.6)
+
+
+## Matrix indexing
+
+Given a matrix Z:
+```{r, label = matZ, echo = FALSE}
+Z <- matrix(c(4, 6.5, 10, 8, 0, 1, 1, 0), ncol = 2)
+colnames(Z) <- c("test", "group")
+Z
+```
+What is the test score of student 4?
+```{r}
+Z[4, "test"]
+```
+
+
+## Matrix filtering 
+
+Create a vector "index", with the row numbers of Z:
+```{r}
+index <- 1:nrow(Z) 
+```
+Then make a selection of the row numbers you are interested in (e.g. group 0)
+```{r}
+index0 <- index[Z[, 2] == 0]
+index0
+```
+
+----
+
+Then make a selection of the row numbers you are interested in (e.g. group 0)
+```{r}
+index0 <- index[Z[, 2] == 0]
+index0
+```
+
+Use this index0 in your calculations for group 0, for example:
+```{r}
+mean(Z[index0, 1])
+```
+
+
+
+## Sorting a column of a matrix
+
+```{r}
+sort(Z[, 1]); 
+```
+```{r, eval = FALSE}
+Z[sort(Z[, 1]), ]# does not work!
+```
+
+## Sort a matrix by a column
+
+```{r}
+indext <- order(Z[, 1]); 
+indext
+Z[indext, ]
+```
+
+
+## Matrix row/column functions
+
+*In general:*
+
+To apply a function (```f```) on rows of a matrix (```Z```): Use ```apply(Z, 1, f)```   
+
+To apply a function on the columns of a matrix: Use ```apply(Z, 2, f)```   
+
+*More specific:* 
+
+Use existing functions:
+
+- ```rowSums()``` and ```colSums()```;
+
+- ```rowMeans()``` and ```colMeans()```.
+
+
+## Examples with apply()
+```{r, echo = FALSE}
+Z <- matrix(4:9, ncol=2)
+Z
+```
+
+```{r}
+f <- function(x) {
+  xnew <- x - mean(x)
+}
+apply(Z, 2, f)
+```
+
+## Note on apply
+
+If the function to be applied returns a vector of *k* components, then the result of apply() will have *k* rows.
+
+Example: Apply function f to the rows of matrix Z:
+```{r, echo = FALSE}
+Z <- matrix(4 : 9, ncol = 2)
+Z
+```
+```{r}
+apply(Z, 1, f)
+```
+
+## Strategy to read book
+
+- Read the example (without performing the code);
+
+- Try to understand the R code (imagine what the output is, discuss it with your neighbour);
+
+- Perform the example in R (download the [Code from the book](http://www.nostarch.com/artofr.htm))
+
+
+Apply this strategy to Example 3.3.2 of the book pp. 72 - 73
+```{r, echo = FALSE}
+findols <- function(x) {
+   findol <- function(xrow) {
+       mdn <- median(xrow)
+       devs <- abs(xrow-mdn)  
+       return(which.max(devs))  
+   }
+   return(apply(x, 1, findol))  
+}
+```
+Use the following matrix as input:
+```{r}
+rs <- matrix(c(150, 250, 5, 200, 200, 100, 600, 150, 125, 175, 50, 
+    75, 60, 200, 65), nrow = 3, byrow = TRUE)
+```
+
+
+## Solution
+
+```{r}
+rs
+findols(rs)
+```
+
+
+## Extra: add variable names to a matrix
+
+A vector with variable names and a matrix Z:
+```{r}
+x7 <- paste("X", 1:5, sep = "")
+x7
+Z <- matrix(0, nrow = 10, ncol = 5)
+colnames(Z) <- x7
+Z[1, ]
+```
+
+
+## Adding rows
+
+Use the function rbind() to combine matrices by rows:
+```{r}
+Y <- matrix(c(1:6), nrow = 2)
+V <- matrix(c(7:15), nrow = 3)
+rbind(Y, V)
+```
+
+The number of columns?/rows? of Y and V should be equal
+
+
+## Adding columns
+
+Use the function cbind() to combine matrices by columns:
+```{r}
+Y <- matrix(c(1:6), nrow = 2)
+W <- matrix(c(7:16), nrow = 2)
+cbind(Y, W)
+```
+The number of columns?/rows? of Y and W should be equal
+
+
+## (Unintended) Dimension reduction
+
+If you select a row from a matrix, the result is NOT a matrix: the two dimensions are reduced to one. For example:
+```{r}
+store2 <- rs[2, ]
+dim(store2)
+```
+
+To keep the two dimensions use:
+```{r}
+store2 <- rs[2, , drop = FALSE]  #empty space between the comma's: take the complete row (i.e., all columns) 
+dim(store2)
+```
+
+# Labmeeting
+
+**Break (15 minutes)**
+
+**Labmeeting week 2**
+
+Exercises of the labmeeting are on Blackboard 
+
+
+
+# Part 2 | Arrays, Lists and Data frames
+
+
+# Chapter 3 (continued):| Arrays 
+
+Higher dimensional arrays   
+
+
+## Higher-dimensional arrays
+
+A matrix is a special case of an array (i.e., a two-dimensional array). Arrays are multidimensional. For example, create a three-dimensional array with a vector as input:
+
+```{r, label = cre_A3}
+A3 <- array(seq(1, 16), dim = c(2, 4, 2)); A3
+```
+
+
+## Array indexing
+
+Order of the dimensions is: row, column, layer.
+
+What are the values for the second row on the second layer of "example"?
+
+```{r, label = index_A3}
+A3[2, , 2]
+```
+
+Read pages 82 and 83. Discover the typo in the matrix of firsttest on p. 82.
+
+
+## Array indexing (dim. red.)
+
+```{r}
+class(A3[2, , 2])
+class(A3[2, , 2, drop = FALSE])
+```
+```{r, eval = FALSE}
+apply(A3, 3, sum)
+```
+
+## Array indexing (dim. red.)
+
+```{r, label = index1_A3}
+class(A3[2, , 2])
+class(A3[2, , 2, drop = FALSE])
+apply(A3, 3, sum)
+```
+
+
+
+
+
+# Chapter 4: | Lists
+
+Creating lists and properties of a list   
+
+List indexing, components and values   
+
+Applying functions to lists   
+
+
+
+## What is a list?
+
+A list structure can combine objects of different types/modes. Each object is called a "component" of a list.
+
+```{r}
+info <- list(teacher = c("Maarten", "Elise"), week = 1:7)
+info
+```
+
+
+## A recursive list: a list within a list
+
+A list can be regarded as a vector of components. It can also combine ```list()``` objects (par. 4.5) 
+
+```{r, label = cre_obj2}
+SCR <- vector('list', 2)
+names(SCR) <- paste0("year", 1:2)
+SCR[[1]] <- list(year = "2014/2015", info = info)
+```
+
+## What are the components of a list?
+
+How many components?
+```{r, eval = FALSE}
+length(SCR)
+```
+
+What are the names?
+```{r, eval = FALSE}
+attributes(SCR)
+```
+
+Is there more?
+```{r, eval = FALSE}
+str(SCR)
+```
+
+
+## List components
+
+How many components?
+```{r, eval = TRUE}
+length(SCR)
+```
+
+What are the names?
+```{r, eval = TRUE}
+attributes(SCR)
+```
+
+## List components
+
+Is there more?
+```{r, eval = TRUE}
+str(SCR)
+```
+
+## Get rid of ```list```
+
+```{r}
+unlist(SCR)
+```
+
+
+
+
+## Example of existing lists in R
+
+A list is often used as output of a function. For example:
+
+```{r}
+lm1 <- lm(dist ~ speed, data = cars)
+attributes(lm1)
+```
+
+## Ask for the specific components of a list
+
+```{r}
+lm1$coefficients  #gives the coefficients
+lm1[[1]]  #gives the coefficients
+lm1[[2]][1:5]  #gives the first five values of residuals
+```
+
+
+## Do try it at home
+
+```{r}
+f <- function(x) {
+    mx <- mean(x)
+    xnew <- x - mean(x)
+    obj <- list(mean = mx, dfm = xnew)
+    return(obj)
+}
+obj3 <- f(c(1, 2, 3))
+obj3
+```
+
+## List indexing
+
+If you use double brackets to ask for a component of a list: the component is returned (having the class of the object). 
+
+```{r}
+obj3[[2]]; 
+```
+
+If you use single brackets to ask for a component of a list, the result is a list.
+
+```{r}
+obj3[2]
+```
+
+
+
+## Question time... (a bit advanced...)
+
+Can anyone explain why
+
+```{r, label = cre_SCRwrong}
+SCR <- vector('list', 2)
+SCR[1] <- list(year = "2014/2015", info = info); 
+```
+gives a warning, as compared to
+
+```{r, label = cre_SCRright}
+SCR <- list(); length(SCR) <- 2
+SCR[[1]] <- list(year = "2014/2015", info = info); 
+```
+
+?
+
+
+## Applying functions to lists: lapply()
+
+Use lapply() to perform a function on components of a list, for example, z was given by:
+```{r, echo = FALSE}
+obj3
+```
+```{r, label = ex_lapply}
+lapply(obj3, length) #gives the length of each component of z
+```
+
+## Applying functions to lists: lapply()
+
+Note that lapply() always assumes the input to be a list (e.g., a vector is coerced to a list form).  
+
+```{r, label = ex2_lapply}
+lapply(c(1:3), length)
+```
+
+## Applying functions to lists: sapply()
+
+The output of lapply() is always a list. If you want to simplify the output (e.g., a vector): Use sapply() 
+
+
+```{r, label = ex_sapply}
+sapply(info, length)
+sapply(SCR, length)
+```
+
+
+# Chapter 5: | Data frames
+
+5.1  Creating Data Frames    
+
+5.2  Matrix-Like Operations   
+
+5.4  Applying functions to Data Frames   
+
+
+## Introduction Data frames
+
+5.1  Creating Data Frames
+
+5.2  Matrix-Like Operations
+
+*5.3  Merging Data Frames (self-study, important tool!)*
+
+5.4  Applying functions to Data Frames
+
+
+
+## Creating Data Frames
+ 
+Data frames have properties of lists AND matrices... 
+
+```{r, datafr1}
+N <- 10
+dfram <- data.frame(row.names = 1:N)
+dfram$V1 <- c(1:9, NA)
+dfram[[2]] <- c(NA, letters[1:9])
+dfram[, 3] <- colors()[1:10]
+dfram[, "V4"] <- 10:1
+str(dfram)  # view structure of dfram
+```
+
+## Creating Data Frames
+ 
+Data frames have properties of lists AND matrices... 
+
+```{r, datafr2}
+V1 <- c(1:9,NA)
+V2 <- c(NA,letters[1:9])
+V3 <- colors()[1:10]
+V4 <- 10:1
+dfram <- data.frame(V1,V2,V3, V4)
+str(dfram) # view structure of dfram
+```
+
+
+
+
+## Extracting from Data Frames
+
+Within in a 'local' data environment.
+
+```{r, eval = TRUE}
+with(data = dfram, expr = (V1 > 3) & (V4 > 3))
+```
+
+```{r, eval = TRUE}
+subset(x = dfram, 
+       subset = V1 > 3 & V4 > 3, 
+       select = c(1,3,4)
+       )
+```
+
+
+
+## List/Matrix-Like Operations
+
+Which is List-like, which is Matrix-like? 
+
+```{r, eval = FALSE}
+class(dfram[["V1"]])
+```
+
+```{r, eval = FALSE}
+class(dfram[, "V1", drop = FALSE])
+```
+
+```{r, eval = FALSE}
+class(dfram[, "V1"])
+```
+
+```{r, eval = FALSE}
+class(dfram["V1"])
+```
+
+
+## Matrix-Like Operations
+
+When would (not) these code chunks work?
+
+```{r, eval = FALSE}
+apply(X = dfram, MARGIN = 2, FUN = mean, na.rm = TRUE)
+```
+
+```{r, eval = FALSE}
+apply(X = dfram, MARGIN = 2, FUN = print)
+```
+
+```{r, eval = FALSE}
+cbind(dfram, dfram[order(dfram$V4)[-4], ])
+```
+
+```{r, eval = FALSE}
+rbind(dfram, dfram)
+```
+
+
+## Matrix-Like Operations
+
+When would (not) these code chunks work?
+
+```{r, eval = TRUE, message = FALSE}
+apply(X = dfram, MARGIN = 2, FUN = mean, na.rm = TRUE)
+```
+
+
+## Matrix-Like Operations
+
+When would (not) these code chunks work?
+
+```{r, eval = TRUE, message = FALSE}
+apply(X = dfram, MARGIN = 2, FUN = print)
+```
+
+
+## Matrix-Like Operations
+
+When would (not) these code chunks work?
+
+```{r, eval = TRUE, error = TRUE}
+cbind(dfram, dfram[order(dfram$V4)[-4], ])
+```
+
+
+
+## Matrix-Like Operations
+
+When would (not) these code chunks work?
+
+```{r, eval = TRUE}
+rbind(dfram, dfram)
+```
+
+
+
+
+## List-Like Operations
+
+How about these implicit loops? 
+
+```{r, eval = FALSE}
+lapply(X = dfram, FUN = mean, na.rm = TRUE)
+```
+
+```{r, eval = TRUE}
+sapply(X = dfram, FUN = mean, na.rm = TRUE)
+```
+
+
+
+## Recap of this afternoon
+
+
+**Chapter 3: Matrices and arrays**   
+  a. Unintended dimension reduction   
+  b. Higher dimensional arrays   
+  
+**Chapter 4: Lists**   
+  a. Creating lists and list properties   
+  b. List indexing   
+  c. Applying functions to lists   
+
+**Chapter 5: Data Frames**   
+  a. Creating Data Frames
+  b. Matrix-Like Operations
+  c. Applying functions to Data Frames
+
+
+## Next Week
+
+Chapters 6 - 7
+
+See blackboard for the Peer-review assignment 2
+
+

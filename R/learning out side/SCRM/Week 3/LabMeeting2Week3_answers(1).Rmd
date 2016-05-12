@@ -1,0 +1,331 @@
+---
+title: "Lab meeting 2 Week 3"
+output: html_document
+---
+
+
+## R programming structures: Loops and Functions
+
+
+## 1. For-loop
+
+Define the matrix:
+
+```{r, label = preps1}
+X <- matrix(rnorm(2500*12, sd = 3), ncol = 12)
+```
+
+Write a for-loop to do the following calculation for \(i= 1, \dlots, 2500\):
+
+* if the \(i^{th}\) element of the first column of the matrix in `X` is positive, then add to the next element (i.e., the (i.e., (i + 1)th element) a random number from the standard normal.
+* if the \(i^{th}\) element of the first column of the matrix in `X` is negative, then add to the next element (i.e., the (i + 1)th element) a random number form the normal distribution with mean zero and standard deviation 4.
+
+
+```{r, label = finitemixed, eval = FALSE}
+N <- nrow(X) 
+e <- rnorm(N - 1)
+for (i in 1:(N - 1))
+{
+if (X[i, 1] > 0) {
+  X[i+1, 1] <- X[i+1, 1] + e[i]
+  }
+if (X[i, 1] < 0) {
+  X[i+1, 1] <- X[i+1, 1] + e[i]*4
+  }
+}
+```
+
+
+
+
+## Writing Functions.
+
+When applicable, keep in mind to include the following checks in each function you write:
+
+* if `x` is not numeric, return `NA` and a warning message
+* include a na.rm argument deafulting to FALSE
+* if there are missing values in `x` and `na.rm = FALSE`, return an error message
+* if `na.rm = TRUE` remove missing values from `x`
+
+
+# Running average, example from the slides in the lecture.
+
+A function to compute the average until element j of a vector is defined as 
+
+\[ \mu_j = j^{-1} \sum^{j}_{i =1} x_i, \qquad \qquad x = \{x_1, \ldots , x_n\}, j = 1 \ldots, n\]
+
+```{r, label = example}
+AverageUntil <- function(x,j,na.rm=FALSE) {
+  # Computes the average until jth element of x.
+  #
+  # Args:
+  #   x: one vector whose running mean is calculated
+  #   j: the element until where the running mean is calculated
+  #   na.rm: whether te remove NA's in vector x
+  #
+  # Returns:
+  #   Average of x up to j
+  #
+  
+  # Perfrom checks:
+  if( !is.numeric(x) ){
+    stop("x is not numeric")
+  }
+  if (na.rm){
+    x<-na.omit(x)
+  }
+  
+  # return average:
+  out <- na.fail(j^-1*sum(x[1:j]))
+  return(out)
+  
+}
+
+AverageUntil(x = 1:20, j = 4, na.rm=TRUE)
+```
+
+Go through the code and see what is happening. Use the function help files and internet if you would like to understand better the functions being used.
+
+
+
+# 2. Convergence to a normal
+
+Write a function `convnorm` using while() that samples random numbers from N(0,1), one at a time (per iteration). The function stops sampling numbers when the absolute difference between the mean of the numbers - that were sampled up till that point - and 0 is less than 0.0001. The function should displays, using `cat()` each iteration nr, and the running average at that point, and the value sampled from the normal. The function outputs only the number of iterations and the mean difference.
+
+```{r, label = convnorm, eval = FALSE}
+ConvNorm <- function(mean = 0, sd = 1, conv = 0.0001, seed = 20141120){
+  # Convergence to the mean.
+  #
+  # Args:
+  #   mean: mean of norm distr. to sample from, default = 0
+  #   sd: standard deviation of norm distr. to sample from, 
+  #       by default set equal to 1.
+  #   conv: convergence criterion, default = 0.0001
+  #   seed: seed used for reprodicing the pseudo random  
+  #         number generation.
+  # 
+  # Returns:
+  #   a list with running average, mean difference
+  #
+  set.seed(seed)
+  it <- 0; ra <- 0# 
+  while (TRUE) {
+    x  <- rnorm(1)
+    it <- it + 1
+    ra <- (ra*(it - 1) + x) / it
+    mdiff <- abs( mean - ra) 
+    cat("running average is ", ra, " for iteration ", it, "\n")
+    crit <- mdiff < conv
+    if (crit) break
+  }
+  out <- list(AbsMeanDiff = mdiff, NrIt = it)
+  return(out)
+}
+
+ConvNorm()
+```
+
+
+
+# 3. Bubble sort
+
+Bubble sort is a sorting algorithm that works repeatedly stepping through a vector to be sorted, comparing each pair of adjacent elements and swapping them if tey are in the wrong order. The walk through the vector is repeated until no swaps are needed. The algrithm sorts a vector in ascending order.
+
+Write a function `bubble()` that implements the Bubble sort algorithm.
+
+*IMPORTANT: Even the biggest professors made the following ERROR once when swapping values:*
+```{r, eval = FALSE}
+x[2] <- x[3]
+x[3] <- x[2]
+```
+Check out how come the above swap would not work....
+
+
+```{r, eval = FALSE}
+bubble <- function(x, na.rm = FALSE) {
+  # Ascending sort algorithm for the numeric vector x
+  #
+  # Args:
+  #   x: numeric vector
+  #   na.rm: whether to remove missings in the vecor, default = FALSE
+  #
+  # Returns:
+  #   x sorted from smallest to highest values
+  
+  # performing some checks...
+  if( !is.numeric(x) ) {
+    stop("x is not numeric")
+  if (na.rm) {
+      x<-na.omit(x)
+    }
+  
+  n <- length(na.fail(x))
+  
+  repeat{
+    swaps <- 0
+    for (i in 1:(n-1)) {
+      
+      if (x[i] > x[i + 1]) {
+        tmp  <- x[i]
+        x[i] <- x[i + 1]
+        x[i + 1] <- tmp
+        swaps <- 1
+        }      
+    }
+    if (!swaps) break
+    
+    }
+  
+    return(x)  
+}
+
+y <- c(NA,12:5,NaN, 1:4)
+bubble(y)
+```
+
+
+
+# 4. Central Tendency program 
+
+Write a program conisting of one main function `centr()` and four auxiliary function. The program takes  a vector of numbers as an argument and reports 4 statistics. Checks for the vector should only be performed in the main function. An exception may be applied, using the function `na.fail()`.
+
+Program the function WITHOUT using `min(), max(), sort(), ord(), mean(), median(), sum()` or any of these convenient work arounds. Program everything yourself from scratch using for, while and while loops and simple operators (`+`,`-`, etc.).
+
+*4.1* minimum value
+
+```{r, label = minv, eval = FALSE}
+minv <- function(x) {
+  # Slower version of the function min()
+  #
+  # Args:
+  #   x: numeric vector x
+  #
+  # Returns:
+  #   The minimum value of x.
+  
+   lowest <- x[1]
+   fori (x_i in x[-1]) {
+      if (x_i < lowest) lowest <- x_i
+    }
+   lowest
+}
+```
+
+
+*4.2* maximum value
+```{r, label = maxv, eval = FALSE}
+maxv <- function(x) {
+  # Slower version of the function max()
+  #
+  # Args:
+  #   x: numeric vector x
+  #
+  # Returns:
+  #   The maximum value of x.
+
+  highest <- x[1]
+  for (x_i in x[-1]) {
+    if (x_i > highest) highest <- x_i
+  }
+  highest  
+}
+```
+
+*4.3* median
+```{r, label = medianv, eval = FALSE}
+medv <- function(x){
+  # Slower version of the function median
+  #
+  # Args:
+  #   x: numeric vector x
+  #
+  # Returns:
+  #   The median value of x.
+    
+  n <- length(x)
+  repeat{
+    swaps <- 0
+    for(i in 1:(n-1)){
+      
+      if(x[i] > x[i + 1]){
+        tmp  <- x[i]
+        x[i] <- x[i + 1]
+        x[i + 1] <- tmp
+        swaps <- 1
+        }      
+    }
+    if(!swaps) break
+  }
+  
+  if(n%%2){
+    out <- x[n%/%2]
+    } else {
+      (x[n%/%2] + x[n%/%2 + 1])/2
+    }   
+}
+```
+
+
+*4.4* harmonic mean:
+for numbers \(x_1, x_2, \ldots, \x_n \) the harmonic mean is defined as:
+
+\[ H(x_1, x_2, \ldots, \x_n ) = \frac{n}{\frac{1}{x_1} + \frac{1}{x_2} + \ldots \frac{1}{x_n}}\]
+
+```{r, label = harm, eval = FALSE}
+harmv <- function(x){
+  # function for the harmonic mean.
+  #
+  # Args:
+  #   x: numeric vector
+  #
+  # Returns:
+  #   The harmonic mean of x.
+
+  for(x.i in x){
+    inv <- inv + 1/x.i
+  }
+  hmv <- n/inv
+  return(hmv)
+}
+```
+
+
+
+*4.5* The main function:
+
+```{r, label = centr, eval = FALSE}
+centr <- function(x, na.rm = TRUE){
+  # Calculate four central tendency statistics
+  #
+  # Args:
+  #   x: numeric vector
+  #
+  # Returns:
+  #   A vector with the minimum, median, maximum, 
+  #   mean, and harmonic mean of x
+  
+  
+  if (!is.numeric(x)) {
+    stop("x is not numeric")
+  if (na.rm) {
+      x <- na.omit(x)
+    }
+  if (any(is.na(x))) {
+    stop("missing values in object x")
+  }
+  
+  out <- c(
+    min = minv(x),
+    median = median(x),
+    max = maxv(x),
+    harm = harmv(x),
+    )
+  
+  return(out)
+}
+
+x <- rcauchy(1000, 3, 4)
+x[sample(1:1000, 50)] <- NA
+centr(x)
+```
+
