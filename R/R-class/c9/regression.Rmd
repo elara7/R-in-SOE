@@ -532,8 +532,10 @@ lines(xfit,yfit)
 - x1和x2相关0.8-0.9 高度共线性，x1和x2完全线性关系：完全共线性    
 - 共线性导致方差增大,估计量不稳定,导致系数的检验T减少,难以进入拒绝域,变得容易得到接受原假设的结果         
 - 2个变量的模型存在共线性则方差   
-- $$Var\[b_1\]=\frac{\sigma _^{2}}{(1-r_{12}^{2})\sum _{i=1}^{n}(x_{i1}-\bar{x}_1)^{2}}$$ 
+- $$Var[b_1]=\frac{\sigma ^{2}}{(1-r_{12}^{2})\sum _{i=1}^{n}(x_{i1}-\bar{x}_1)^{2}}$$                      
 - 后果:剔除不显著但实际上应该保留的变量,估计量不稳定,变量系数浮动很大甚至符号发生变化,对样本和变量变化很敏感,R2很大的时候变量缺都不显著     
+
+
 
 ### 检验
 加入或者去掉变量，看其他变量系数是否有明显变化（特别是正负变化）    
@@ -548,14 +550,14 @@ X'X的特征值(Eigenvalue)检验
 condition number            
 - $\kappa =(\textrm{largest eigenvalue}/\textrm{smallest eigenvalue})^{1/2}$   
 
-## 解决方法      
+### 解决方法      
 - 改变模型结构        
 - 剔除有关变量（基本上不可行）    
 - 面板数据           
 - 逐步回归            
 - 岭回归  
 
-###ridge regression
+## ridge regression
 [ridge regression](file:///C:/Users/44180/Documents/R-in-SOE/R/learning%20out%20side/ridge_regression.html)
 
 没有多重共线性也可以用,MSE在k合适的时候会比OLS更小      
@@ -728,15 +730,32 @@ title(main="MSE evolution of interception")
 plot( mse3 ~ kl, type="l" )
 title(main="MSE evolution of x1")
 ```
+
 according to the literature, it is VERY high: they say you should not go beyond 0.1
 
-# Best Subset Selection  
-1. R2   
-2. adj.R2(一般用summary可以调用)       
-3. $C_p$值,$C_p=\frac{1}{n}(RSS+2k\hat{sigma}^{2})$,k是变量个数,\hat{sigma}^{2}
-k个变量中选出i个变量做回归,并找出最好的i个变量
-i从1到
-每个模型都是选出i个变量的时候,Cki个模型中RSS最小的模型
+## Model selection criteria 
+越大越好        
+1. R2(拟合角度)   
+2. adj.R2(一般用summary可以调用)()    
+越小越好        
+3. $C_p$值,$C_p=\frac{1}{n}(RSS+2k\hat{\sigma}^{2})$,k是变量个数,$\hat{\sigma}^{2}$是误差项估计量的方差,越小越好(预测角度)      
+4. $AIC=(\frac{2k}{n})+ln(\frac{RSS}{n})$(极大似然估计角度)         
+```{r}
+#mod1 = lm(y ~ x1 + ... + xk, data=ds)
+#AIC(mod1)
+```     
+
+5. $BIC=\frac{k}{n}ln n+ln(\frac{RSS}{n})       
+```{r}
+#library(nlme)
+#mod1 = lm(y ~ x1 + ... + xk, data=ds)
+#BIC(mod1)
+```   
+
+## Best Subset Selection最优子集法
+k个变量中选出i个变量做回归,有$k \choose i$个模型,找出最好的那i个变量            
+i从1到k都取一遍         
+每个模型都是选出i个变量的时候,$k \choose i$个模型中RSS最小的模型($R^{2}$最大)           
 ```{r}
 library(ISLR)
 names(Hitters)
@@ -748,7 +767,7 @@ dim(Hitters)
 sum(is.na(Hitters))
 
 library(leaps)
-#salary做y,其他做x,逐步加入,分别回归19个模型出来
+#salary做y,其他做x,基于Best Subset Selection方法,找出19个回归模型出来
 regfit.full=regsubsets(Salary~.,data=Hitters,nvmax=19)
 reg.summary=summary(regfit.full)
 #返回的项目
@@ -779,17 +798,23 @@ which.min(reg.summary$bic)
 plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
 #标点
 points(6,reg.summary$bic[6],col="red",cex=2,pch=20)
-par(mfrow=c(2,2))
+#par(mfrow=c(2,2))
+#行代表这个模型对应的判断标准值,列代表变量              
+#色块代表选择对应变量集合的时候生成的模型,是该变量集合的变量个数下RSS最小的模型,并对应一个指标值   
+#左边轴的数字可能会相同是因为精度的问题,事实上只有最上方的是最好的              
+#色块原理:把灰度0-1按纵轴最小到最大的间隔等分,然后每个模型对应的纵轴值对应一个灰度值
+par(mfrow=c(1,1))
 plot(regfit.full,scale="r2")
 plot(regfit.full,scale="adjr2")
 plot(regfit.full,scale="Cp")
 plot(regfit.full,scale="bic")
+#返回6个变量时最佳模型的系数
 coef(regfit.full,6)
 ```
 
-# Stepwise逐步回归
-- 向前
-- 向后
+## Stepwise逐步回归
+- 向前-从空模型开始逐个加入
+- 向后-从全模型开始逐个剔除(要求变量总个数小于样本数)
 - 混合
 ```{r}
 cement<-data.frame( X1=c( 7, 1, 11, 11, 7, 11, 3, 1, 2, 21, 1, 11, 10),
@@ -804,7 +829,7 @@ summary(lm.sol)
 #逐步删去,按照AIC准则,每行代表去掉这个变量的数据,none代表不去掉,当none的AIC最小时停止
 lm.step<-step(lm.sol)
 summary(lm.step)
-#?
+#返回去掉一个变量的结果
 drop1(lm.step)
 #最终
 lm.opt<-lm(Y ~ X1+X2, data=cement); summary(lm.opt)
