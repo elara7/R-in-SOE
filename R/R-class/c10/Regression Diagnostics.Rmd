@@ -4,7 +4,7 @@ author: "Elara"
 date: "2016年5月11日"
 output: html_document
 ---
-
+C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c10\\data\\
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -60,5 +60,137 @@ resettest(y1 ~ x , power=2, type="regressor")
 #原假设:没有遗漏变量,p值很小则拒绝原假设
 resettest(y2 ~ x , power=2, type="regressor")
 ```
+
+# heteroscedasticy异方差                 
+
+同方差:随着样本观察点x的变化,线性模型中随机误差向的方差不改变           
+异方差产生原因:                  
+1. 随机误差项包括了测量误差和模型中被省略的一些因素对因变量的影响       
+2. 来自不同抽样单元的因变量观察值之间差别很大   
+
+## 检验:
+### 图示法      
+用残差做纵轴,因变量y的fitted value做横轴,图像发散或者收缩即为异方差(不严谨)                  
+### Gold-Quandt检验             
+条件:观察值数目至少是参数的两倍,随机项没有自相关且服从正态分布          
+零假设:扰动项同方差             
+步骤:           
+1.将某个解释变量观测值按由小到大顺序排列,排列的中间约1/4的观测值去掉(去掉的个数c),把其余的观测值当作2部分         
+2.分别对2部分样本回归,计算相应残差平方和RSS,$RSS_1$表示x值比较小的部分样本的RSS,$RSS_2$表示x值比较大的部分样本的RSS               
+3. 统计量
+$$F=\frac{RSS_2/[(n-c)/2]}{RSS_1/[(n-c)/2]}$$
+F服从自由度为$\frac{n-c}{2}-k,\frac{n-c-2k}{2}$的F分布,F值太大则拒绝原假设,认为不是同方差         
+
+### white检验
+1. 原方程:$y_i=\beta_0+\beta_1x_i+u_i$          
+2. 辅助回归方程:$e_i^{2}=\gama_0+\gama_1x_i+\gama_2x_i^{2}+v_i$
+3. 假设:$H_0:\gama_1=\gama_2=0,H_A:\gama_1 \neq 0 or \gama_2 \neq 0$,     
+只要有一个辅助回归变量系数不为零就是异方差      
+4. 统计量:$nR^{2}$服从自由度为2的卡方分布               
+
+2个自变量x的时候需要5个辅助回归变量,3个时候需要9个,以此类推(vech)         
+## 修正
+OLS仍然无偏一致,仍然正确,但是非有效,只是系数标准差不正确,参数显著性检验失效,减低预测精度,置信区间不可用
+方差已知的时候
+原方程两边所有项同除以\sigma_i
+换元重新估计即可(加权最小二乘估计)
+方差未知
+异方差的系数方差和同方差的不同
+用ei替代sigmai
+带入异方差的系数方差公式,开根号后就是稳健标准差HCSE(beta),作为标准差用,样本量要够大
+也可以取对数缓解
+如果残差平方期望=sigma^2xi^2,则同除以xi即可修正
+
+避免异方差方法:使不同变量的测度单位接近,比如总收入总消费数据,不同国家总量差距很大,应该取人均数据.
+或者取对数,缓解
+```{r}
+install.packages("lmtest")
+library(lmtest)
+#生成残差与x有关的数据(有异方差)
+x <- runif(100)
+y <- 1 - 2*x + .3*x*rnorm(100)
+plot(y~x)
+r <- lm(y~x)
+abline(r, col="red")
+title(main="Heteroscedasticity")
+#图示法
+plot(r$residuals ~ r$fitted.values)
+#G-Q检验
+gqtest(r)
+#B-P检验
+bptest(r)
+#white检验
+#构造辅助回归
+aux <- r$residuals^2
+aux_lm <- lm(aux ~ x + I(x^2))
+#nR2的卡方检验
+pchisq(length(x)*summary(aux_lm)$r.squared,df=2,lower.tail=F)
+#HCSE,看对角的元素.函数在car包内
+library(car)
+hccm(r)
+#同时有自相关异方差问题的解决方法
+library(sandwich)
+NeweyWest(r)
+```
+
+```{r}
+nerlove<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c10\\data\\nerlove.csv")
+head(nerlove)
+r<-lm(lntc~lnq+lnpl+lnpk+lnpf,data=nerlove)
+summary(r)
+#检验异方差
+plot(r$residuals ~ r$fitted.values)
+#library(lmtest)
+#B-P test
+bptest(r)
+#white test
+aux <- r$residuals^2
+aux_lm <- lm(aux ~ (lnq+lnpl+lnpk+lnpf)^2+I(lnq^2)+I(lnpl^2)
++I(lnpk^2)+I(lnpf^2),data=nerlove)
+summary(aux_lm)
+pchisq(length(nerlove$lnq)*summary(aux_lm)$r.squared,df=14,lower.tail=F)
+#NeweyWest,检验lnpk系数是否为0,vcov=NeweyWest(r)返回r模型中系数的HCSE矩阵
+#library(car)
+linearHypothesis(r, "lnpk = 0", vcov=NeweyWest(r))
+#上式检验统计量F的算法(用HCSE替代失效的SE)
+summary(r)
+names(r)
+library(sandwich)
+vv<-NeweyWest(r)
+#平方前是T检验算法,平方后成为F值
+(r$coefficients[4]/sqrt(vv[4,4]))^2
+#一次性用HCSE对全部系数做t检验
+coeftest(r, vcov = NeweyWest(r))
+#上式的SE算法
+sqrt(vv[4,4])
+```
+
+# 自相关
+扰动项与往期取值有关,相关系数为自相关系数,表示自相关程度和方向
+OLS仍然是无偏一致非有效,OLS的方差有偏,T和F检验失效
+原因
+数学形式不妥
+设定偏误
+滞后效应(惯性)
+略去了有关变量
+比如
+研究消费和收入关系,用只有季度数据没有年度消费数据,直接用季度平均做年数据
+检验
+图示法:y:et,x:et-1
+durbin-watson检验
+DW约等于2(1-r)
+所以r1 0 -1 DW分别是0 2 4
+查表后在上下限之间无法判断,0-2之间小的拒绝,大的接受,2-4之间小的接受,大的拒绝
+只能算1阶
+有无法判断区域
+无法判定过原点的模型
+要求样本至少15
+不适合自回归模型(自变量包含因变量滞后项)
+durbin-h统计量
+允许自变量包含因变量滞后期
+breusch-godfrey检验
+OLS回归后计算残差,用et对et-1到et-p回归
+零假设:全是0
+统计量TR2 卡方(p)
 
 
