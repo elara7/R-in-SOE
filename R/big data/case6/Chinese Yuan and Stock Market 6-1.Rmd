@@ -1,0 +1,87 @@
+---
+title: "Chinese Yuan and Stock Market 6-1"
+author: "Elara"
+date: "2016年5月14日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+China Stock Market Index: Shanghai Common Stock(A股)
+Time Series Data Visualization
+#数据获取
+```{r}
+# Using Quandl API to search and retrieve data series
+# install.packages("Quandl")
+library(Quandl)
+#Quandl.api_key("4UqGASL7CigqHzpfdnNw")
+#SP500<-Quandl(code="YAHOO/INDEX_GSPC",type="xts") 
+# xts:regular format
+# xts or zoo type should be used for daily high frequency data
+# frequency conversion for xts type: apply.xxx
+# xxx=yearly, quartertly, monthly, weekly
+#SSEC<-Quandl(code="YAHOO/INDEX_SSEC",type="xts") 
+# daily price index: irregularly-spaced time series
+# the following is for saving to csv and retriving from it
+#SSEC_raw<-Quandl(code="YAHOO/INDEX_SSEC",type="raw",order="asc") 
+# write.csv(SSEC,file="C:/Course16/WISE2016/data/SSEC.csv",row.names=F)
+# SSEC1<-read.csv(file="C:/Course16/WISE2016/data/SSEC.csv",stringsAsFactors=F)
+# SSEC1<-xts(SSEC1,order.by=as.Date(SSEC1$Date))
+# data<-SSEC1[,"Adjusted.Close"]
+load("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case6\\SP500 and SSEC.RData")
+#Volume数据开始为0是因为没数据
+```
+
+#数据转换
+```{r}
+data<-SSEC[,"Adjusted Close"]
+class(data)
+summary(data)
+plot(data)
+# monthly average: regularly-space time series把日值转化成月度均值
+# 转化后mdata中带有时间和频率信息
+mdata<-ts(apply.monthly(data,mean),start=c(1997,7),frequency=12)
+class(mdata)
+head(mdata)
+plot(mdata)
+```
+
+#月度趋势
+```{r}
+# install.packages("forecast")
+library(forecast)
+monthplot(mdata)#每张小图是97-16年某月的月平均指数,横线是不同年份在该月指数的均值
+seasonplot(mdata,s=12,year.labels=T,col=rainbow(12))#每条线是某一年各月均值
+#滞后相关图
+lag.plot(mdata,12)
+```
+#日趋势 daily return as difference of log price index
+```{r}
+#100*diff(log(data))日收益率
+rd<-na.omit(100*diff(log(data)))#消除miss value
+summary(rd)
+plot(rd)
+# monthly return is the sum of daily returns in a month#转化成月度收益数据
+rm<-ts(apply.monthly(rd,sum),start=c(1997,7),frequency=12)
+plot(rm)
+monthplot(rm)#各月的年同比数据
+seasonplot(rm,s=12,year.labels=T,col=rainbow(12))#各年的月度数据曲线
+lag.plot(rm,12)#滞后相关图
+Acf(rm,60,type="correlation")#ACF,60期滞后,MA
+Acf(rm,60,type="partial")#PACF,60期滞后AR
+```
+
+# monthly volatility(风险) is the sum of daily squared returns in a month
+```{r}
+rv<-ts(apply.monthly(rd^2,sum),start=c(1997,7),frequency=12)#把月度收益率数据转换为月度rd平方和数据(volatility)
+plot(rv)
+#每月的各年同比
+monthplot(rv)
+#每年的各月趋势
+seasonplot(rv,s=12,year.labels=T,col=rainbow(12))
+lag.plot(rv,12)
+Acf(rv,60,type="correlation")
+Acf(rv,60,type="partial")
+```
