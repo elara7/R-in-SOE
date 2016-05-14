@@ -13,8 +13,8 @@ AmEx Credit Scoring and DEFAULT
 DEFAULT|CARDHLDR ~ AGE+INCOME+OWNRENT+SELFEMPL+ACADMOS, used by Greene's lecture
 ```{r}
 # setwd("C:/Course16/WISE2016/R")
-AmEx<-read.csv("C:\\Users\\44180\\Documents\\Surface-workandstudy\\soe\\bigdata\\data of case5\\AmEx.csv")
-# AmEx<-read.csv("D:\\PC-workandstudy\\soe\\bigdata\\data of case5\\AmEx.csv")
+#AmEx<-read.csv("C:\\Users\\44180\\Documents\\Surface-workandstudy\\soe\\bigdata\\data of case5\\AmEx.csv")
+ AmEx<-read.csv("D:\\PC-workandstudy\\soe\\bigdata\\data of case5\\AmEx.csv")
 # exclude<-c(1,2,"BANKBOTH","CREDGAS","UNEMP","DRUGSTOR")
 # DEFAULT|CARDHLDR=1(default定义为1)
 AmEx1<-subset(AmEx,CARDHLDR==1,select=-c(1,6,12,17,39:56))
@@ -72,6 +72,6 @@ for(i in 1:100) {
   logit2.cv <- cv.glmnet(Xs, Y, family="binomial", alpha=1)
   cv_vector[i]=logit2.cv$lambda.min
 }
-median(cv_vector)  # find median value of lambda.min
+median(cv_vector)  # find median value of #lambda.min
 coef(logit2,s=median(cv_vector))  # s=lambda selected 
 

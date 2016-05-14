@@ -53,11 +53,12 @@ logit2<-step(logit0,scope=list(lower=logit0,upper=logit1),direction="forward")
 summary(logit2)
 ```
 
-
-install.packages("boot")                
-library(boot)           
- cross validation can take a long time to run           
-logit2.cv<-cv.glm(glmfit=logit2,data=AmEx1)             
-summary(logit2.cv)              
- use glmnet pacakge to select variables and run CV will be more efficient               
+```{r}
+#install.packages("boot")
+library(boot)
+# cross validation can take a long time to run
+logit2.cv<-cv.glm(glmfit=logit2,data=AmEx1)
+summary(logit2.cv)
+# use glmnet pacakge to select variables and run CV will be more efficient
+```
 
