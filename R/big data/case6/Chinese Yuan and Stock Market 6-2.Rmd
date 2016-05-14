@@ -10,9 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # China Stock Market Index: Shanghai Common Stock
-# Structural Time Series (StrucTS function)
-#
-# Using Quandl API to search and retrieve data series
+Structural Time Series (StrucTS function)
+```{r}
+#Using Quandl API to search and retrieve data series
 # install.packages("Quandl")
 library(Quandl)
 # SP500<-Quandl(code="YAHOO/INDEX_GSPC",type="xts") 
@@ -24,6 +24,7 @@ SSEC<-Quandl(code="YAHOO/INDEX_SSEC",type="xts")
 data<-SSEC[,"Adjusted Close"]
 summary(data)
 plot(data)
+```
 
 # daily return as difference of log price index
 ```{r}
