@@ -10,9 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # China Stock Market Index: Shanghai Common Stock
-# State Space Time Series Analysis using dlm package
-#
+State Space Time Series Analysis using dlm package
+
 # Using Quandl API to search and retrieve data series
+```{r}
 # install.packages("Quandl")
 library(Quandl)
 # Quandl.auth("4UqGASL7CigqHzpfdnNw")
@@ -25,18 +26,22 @@ SSEC<-Quandl(code="YAHOO/INDEX_SSEC",type="xts")
 data<-SSEC[,"Adjusted Close"]
 summary(data)
 plot(data)
-
+```
 # select a variable for analysis
+```{r}
 Y<-log(data)
 
-level0<-mean(Y)
-slope0<-mean(diff(Y),na.rm=T)
+level0<-mean(Y) #mean of Y
+slope0<-mean(diff(Y),na.rm=T) #mean of diff Y
 
 library(dlm)
 
 # local level model
 dlm1<-function(params) {
   dlmModPoly(order=1,dV=exp(params[1]),dW=exp(params[2]))
+        # exp:make sure it is positive
+        # it is a linear model
+        # 
 }
 # constant level: dW=0 restricted
 dlm1<-function(params) {
@@ -46,6 +51,8 @@ dlm1<-function(params) {
 # local trend model
 dlm2<-function(params) {
   dlmModPoly(order=2,dV=exp(params[1]),dW=exp(params[2:3]),m0=c(level0,slope0))
+        # dv 1 equation,dw 2 equations,m0 is given
+        # 
 }
 # local trend with constant level: dW[2]=0 restricted
 dlm2<-function(params) {
@@ -62,15 +69,15 @@ dlm3<-function(params) {
 dlm.fit<-dlmMLE(Y,c(1,1),dlm1)
 #dlm.fit<-dlmMLE(Y,c(1,1,1),dlm2)
 #dlm.fit<-dlmMLE(Y,c(1,1,1,1,0,0),dlm3)
-dlm.fit
+dlm.fit# need to cheak converage =0?if not the solution is not realiable
 dlm.model<-dlm1(dlm.fit$par)
 #dlm.model<-dlm2(dlm.fit$par)
 #dlm.model<-dlm3(dlm.fit$par)
 dlm.model
 dlm.model$V  # V(dlm1.model)
 dlm.model$W  # W(dlm1.model)
-dlm.filtered<-dlmFilter(Y,dlm.model)
-dlm.smoothed<-dlmSmooth(dlm.filtered)
+dlm.filtered<-dlmFilter(Y,dlm.model)# 2 step first estimation,second, update
+dlm.smoothed<-dlmSmooth(dlm.filtered)# 
 dlm.resid<-residuals(dlm.filtered)$res
 dlm.fm<-dropFirst(dlm.filtered$m)  # filtered mu
 dlm.sm<-dropFirst(dlm.smoothed$s)  # smoothed mu

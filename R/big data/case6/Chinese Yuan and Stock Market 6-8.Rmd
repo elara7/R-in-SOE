@@ -10,11 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # State Space Time Series Analysis using dlm package
-# Time varying parameters model (TVP)
-# China Stock Market Index (Shanghai Common Stock) and
-# Renminbi Exchange Rate (CNY/USD)
-# 
+Time varying parameters model (TVP)
+China Stock Market Index (Shanghai Common Stock) and
+Renminbi Exchange Rate (CNY/USD)
 # Using Quandl API to search and retrieve data series
+```{r}
 # install.packages("Quandl")
 library(Quandl)
 # Quandl.auth("4UqGASL7CigqHzpfdnNw")
@@ -26,15 +26,19 @@ SSEC<-Quandl(code="YAHOO/INDEX_SSEC",type="xts")
 CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts") 
 # daily price index: irregularly-spaced time series
 # combine data with common rows
-data<-merge(SSEC[,"Adjusted Close"],CNY,all=F)
+data<-merge(SSEC[,"Adjusted Close"],CNY,all=F)#only get the time both not na
 colnames(data)<-c("SSEC","CNY")
 # data<-subset(data,time(data)>c("2005-12-31"))
-#
+```
+# static model
+```{r}
 Y<-log(data[,"SSEC"])
 X1<-data[,"CNY"]
 ols1<-lm(Y~X1)
 summary(ols1)
-#
+```
+# dlm
+```{r}
 library(dlm)
 # time varying parameters model
 tvp1<-function(params,data) {
@@ -43,7 +47,7 @@ tvp1<-function(params,data) {
 
 # ML Estimation 
 tvp.fit<-dlmMLE(Y,c(1,1,1),data=X1,build=tvp1)
-tvp.fit
+tvp.fit#it does not converage,so we cant do filter or smooth,may it be easy to restimate the data part into 2 part by the structual change
 tvp.model<-tvp1(tvp.fit$par,X1)
 tvp.model
 tvp.model$V  # V(ssm1.model)

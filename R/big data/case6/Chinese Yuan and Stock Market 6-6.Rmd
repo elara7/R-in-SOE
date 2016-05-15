@@ -10,8 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Exchange Rate CNY/USD
-# State Space Time Series Models Using DLM package
+State Space Time Series Models Using DLM package
 # Using Quandl API to search and retrieve data series
+```{r}
 # install.packages("Quandl")
 library(Quandl)
 # Quandl.auth("4UqGASL7CigqHzpfdnNw")
@@ -24,12 +25,15 @@ CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts")
 #CNY<-subset(CNY,time(CNY)>c("2005-12-31"))
 summary(CNY)
 plot(CNY)
-
+```
 # select variable for analysis
+```{r}
 Y<-CNY
 Y.train<-window(Y,end=as.Date("2014-12-31"))
 Y.test<-window(Y,start=as.Date("2015-01-01"))
-
+```
+#DLM
+```{r}
 library(dlm)
 # local level model
 dlm1<-function(params) {
@@ -54,8 +58,9 @@ dlm3<-function(params) {
   dlmModPoly(order=2,dV=exp(params[1]),dW=exp(params[2:3]),m0=c(level0,slope0)) +  
     dlmModARMA(ar=params[5],ma=params[6],sigma2=exp(params[4]))
 }
-
+```
 # ML Estimation 
+```{r}
 dlm.fit<-dlmMLE(Y,c(1,1),dlm1)
 #dlm.fit<-dlmMLE(Y,c(1,1,1),dlm2)
 #dlm.fit<-dlmMLE(Y,c(1,1,1,1,0,0),dlm3)
@@ -74,3 +79,4 @@ dlm.sm<-dropFirst(dlm.smoothed$s)  # smoothed mu
 ts.plot(dlm.sm)
 ts.plot(dlm.sm[,1])
 ts.plot(dlm.sm[,2])
+```
