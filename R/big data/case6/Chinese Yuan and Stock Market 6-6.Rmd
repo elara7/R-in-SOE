@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
 ```
 
 # Exchange Rate CNY/USD
@@ -20,9 +20,10 @@ library(Quandl)
 # xts or zoo type should be used for daily high frequency data
 # frequency conversion for xts type: apply.xxx
 # xxx=yearly, quartertly, monthly, weekly
-CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts") 
+#CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts") 
 # daily price index: irregularly-spaced time series
 #CNY<-subset(CNY,time(CNY)>c("2005-12-31"))
+load("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case6\\CNY.RData")
 summary(CNY)
 plot(CNY)
 ```
@@ -40,7 +41,7 @@ dlm1<-function(params) {
   dlmModPoly(order=1,dV=exp(params[1]),dW=exp(params[2]))
 }
 # constant level: dW=0 restricted
-dlm1<-function(params) {
+dlm11<-function(params) {
   dlmModPoly(order=1,dV=exp(params[1]),dW=0)
 }
 
@@ -77,6 +78,6 @@ dlm.resid<-residuals(dlm.filtered)$res
 dlm.fm<-dropFirst(dlm.filtered$m)  # filtered mu
 dlm.sm<-dropFirst(dlm.smoothed$s)  # smoothed mu
 ts.plot(dlm.sm)
-ts.plot(dlm.sm[,1])
-ts.plot(dlm.sm[,2])
+#ts.plot(dlm.sm[,1])
+#ts.plot(dlm.sm[,2])
 ```

@@ -74,6 +74,10 @@ for3
 ```
 
 # a function to compute forecast error statistics(how good is this forecast)
+![](C:\Users\44180\Documents\R-in-SOE\R\big data\case6\6.3.1.png)       
+![](C:\Users\44180\Documents\R-in-SOE\R\big data\case6\6.3.2.png)           
+![](C:\Users\44180\Documents\R-in-SOE\R\big data\case6\6.3.3.png)          
+![](C:\Users\44180\Documents\R-in-SOE\R\big data\case6\6.3.4.png)          
 ```{r}
 predict.error<-function(x,p) {
   data<-ts.intersect(x,p) #Bind time series which have a common frequency. restricts to the time covered by all the series.
@@ -88,18 +92,18 @@ predict.error<-function(x,p) {
   #round(data,p)四舍五入,保留p位小数
   MSE<-round(mean(e^2),4)                   # mean squared error,e=real-fitted
   # results list
-  r2<-round(r^2,4)
+  r2<-round(r^2,4) #cor(x,p)^2,R2
   ME<-round(mean(e),4)                      # mean error
   MAE<-round(mean(abs(e)),4)                # mean absolute error
   MAPE<-round(100*mean(abs(e/x)),4)         # mean absolute error%
   RMSE<-round(sqrt(MSE),4)                  # root mean squared error
   RMSPE<-round(100*sqrt(mean((e/x)^2)),4)   # root mean squared error%
   # MSE Decomposition in percent
-  Um<-round(100*((mx-mp)^2)/MSE,4) #mx:mean of real,mp:mean of fitted
-  Us<-round(100*((sx-sp)^2)/MSE,4)# sx:sd of real,sp:sd of fitted
-  Uc<-round(100*(2*(1-r)*sp*sx)/MSE,4)
-  Ur<-round(100*((sp-r*sx)^2)/MSE,4)
-  Ud<-round(100*((1-r^2)*sx^2)/MSE,4)
+  Um<-round(100*((mx-mp)^2)/MSE,4) #mx:mean of real,mp:mean of fitted,期望偏差平方占比(bias proportion)
+  Us<-round(100*((sx-sp)^2)/MSE,4)# sx:sd of real,sp:sd of fitted,标准差偏差占比(variance proportion)
+  Uc<-round(100*(2*(1-r)*sp*sx)/MSE,4) #相关系数占比(covariance proportion)
+  Ur<-round(100*((sp-r*sx)^2)/MSE,4) #regression proportion
+  Ud<-round(100*((1-r^2)*sx^2)/MSE,4) #disturbance proportion
   results<-c(ME,MAE,MAPE,MSE,RMSE,RMSPE,Um,Us,Uc,Ur,Ud,r2)
   names(results)<-c("ME","MAE","MAPE","MSE","RMSE","RMSPE","Um%","Us%","Uc%","Ur%","Ud%","r2")
   return(results)
@@ -118,6 +122,6 @@ lines(for2$pred,col="green")
 lines(for1$pred,col="red")
 ```
 
-#why we predict?though it is wrong?
+#why we predict though it is wrong?
 want to improve the model.until one day it is powerful enough to predict or explain the real world
 

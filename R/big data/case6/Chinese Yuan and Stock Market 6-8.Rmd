@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
 ```
 
 # State Space Time Series Analysis using dlm package
@@ -22,10 +22,12 @@ library(Quandl)
 # xts or zoo type should be used for daily high frequency data
 # frequency conversion for xts type: apply.xxx
 # xxx=yearly, quartertly, monthly, weekly
-SSEC<-Quandl(code="YAHOO/INDEX_SSEC",type="xts") 
-CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts") 
+#SSEC<-Quandl(code="YAHOO/INDEX_SSEC",type="xts") 
+#CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts") 
 # daily price index: irregularly-spaced time series
 # combine data with common rows
+load("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case6\\SP500 and SSEC.RData")
+load("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case6\\CNY.RData")
 data<-merge(SSEC[,"Adjusted Close"],CNY,all=F)#only get the time both not na
 colnames(data)<-c("SSEC","CNY")
 # data<-subset(data,time(data)>c("2005-12-31"))

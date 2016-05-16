@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
 ```
 
 # Exchange Rate CNY/USD
@@ -20,9 +20,10 @@ library(Quandl)
 # xts or zoo type should be used for daily high frequency data
 # frequency conversion for xts type: apply.xxx
 # xxx=yearly, quartertly, monthly, weekly
-CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts") 
+#CNY<-Quandl(code="BUNDESBANK/BBEX3_D_CNY_USD_CA_AC_000",type="xts") 
 # daily price index: irregularly-spaced time series
 # CNY<-subset(CNY,time(CNY)>c("2005-12-31"))
+load("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\big data\\case6\\CNY.RData")
 summary(CNY)
 plot(CNY)
 ```
@@ -35,7 +36,7 @@ d2006<-xts(ifelse(time(CNY)>c("2005-12-31"),1,0),order.by=time(CNY))
 Y<-CNY
 
 ols3<-lm(Y~d2006)
-summary(ols3)# it does has a structal change impact
+summary(ols3)# it does has a structal change impact (shown in coefficient)
 ```
 #DLM
 ```{r}
@@ -49,7 +50,7 @@ ssm3<-function(params) {
         #dw:state equations,1 is the level 2 is the structual change(dummy)
 }
 # constant level: dW=0 restricted
-ssm3<-function(params) {
+ssm3a<-function(params) {
   dlmModReg(d2006,dV=exp(params[1]),dW=c(exp(params[2]),0))
         #dw[2]is 0,cause we suppose no structual change(dummy=0)
 }
