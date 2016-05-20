@@ -212,4 +212,58 @@ OLS回归后计算残差,用et对et-1到et-p回归
 零假设:全是0    
 统计量TR2 卡方(p)    
 
+修正方法:cochrane-orcutt法
+yt=beta0+beta1x1.....ut   1
+ut=ut-1+vt
+1.OLS计算残差et=yt-hatyt
+2.用残差回归et=rhoet-1+vt计算hatrho
+用hatrho同时乘以1的两边得到2
+2-1以后写成yt'=beta0'+.....+'epsilon't
+epsilon't实际上就是et-hatrhoet-1,yt'=yt-hatrhoyt-1
+重复进行直到不存在1阶自相关(DW检验不显著)
 
+wage<-read.csv("C:\\Users\\XXXHHF\\Documents\\R\\workfile\\#R lecture\\11\\wage_2.csv",header=T)
+head(wage)
+r<-lm(Y~X,data=wage)
+summary(r)
+#residuals
+head(r$residuals)
+#standardized residuals
+head(scale(r$residuals))
+#plot
+library(Hmisc)
+plot(scale(r$residuals)~Lag(scale(r$residuals)))
+abline(h=0,v=0)
+library(car)
+durbinWatsonTest(r)
+library(lmtest)
+bgtest(r)
+bgtest(r,order=3)
+library(Hmisc)
+e<-lm(r$residual~Lag(r$residual)-1)
+summary(e)
+X1<-wage$X-e$coefficients*Lag(wage$X)
+Y1<-wage$Y-e$coefficients*Lag(wage$Y)
+rr<-lm(Y1~X1)
+summary(rr)
+library(car)
+durbinWatsonTest(rr)
+```{r}
+library(Hmisc)
+library(car)
+wage2<-read.csv("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c10\\data\\Exercise_au.csv",header=T)
+head(wage2)
+r<-lm(Y~X,data=wage2)
+summary(r)
+#acf(r$residual)
+#pacf(r$residual)
+durbinWatsonTest(r)
+e<-lm(r$residual~Lag(r$residual)-1)
+summary(e)
+#y_{t}'=y_{t}-\hat{\rho y_{t-1}}
+X1<-wage2$X-e$coefficients*Lag(wage2$X)
+Y1<-wage2$Y-e$coefficients*Lag(wage2$Y)
+rr<-lm(Y1~X1)
+summary(rr)
+durbinWatsonTest(rr)
+```

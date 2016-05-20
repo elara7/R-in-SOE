@@ -1,0 +1,141 @@
+---
+title: "Classification"
+author: "Elara"
+date: "2016年5月20日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# logistic regression   
+$$p(Y=1|X)=\beta_0+\beta_{1}X$$
+左边0-1右边不一定0-1,不好       
+$$
+logit(p)=log(\frac{p}{1-p})=log(\omiga)=\beta_0+\beta_{1}X
+$$
+左边变成负无穷到正无穷,可以使用,左边叫做对数发生比         
+其中$p=u_Y$是Y的条件均值(即给定X的取值,Y=1的概率),
+$$
+p(X)=\frac\{exp(\beta_0+\beta_{1}X)}{(1+exp(\beta_0+\beta_{1}X))}
+$$
+```{r}
+setwd("C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c12\\data\\")
+library("faraway")
+data(pima, package="faraway")
+head(pima)
+b <- factor(pima$test)
+head(b)
+#family,二元,link,logit->二元logit模型
+m <- glm(b ~ diastolic + bmi, family=binomial(link="logit"), data=pima)
+summary(m)
+#系数代表的是X变化对与对数发生比的影响
+#只用bmi回归因为diastolic不显著,binomial默认是logit不写也行
+m.red <- glm(b ~ bmi, family=binomial, data=pima)
+summary(m.red)
+#1 求p(X) Y=1的概率
+newdata <- data.frame(bmi=32.0)
+#type用response,出来的结果是p(x),给定X,Y=1的概率
+predict(m.red, type="response", newdata=newdata)
+#2 验证p(X)结果正确
+E<-exp(-3.68641+0.09353*32)
+E/(1+E)
+# According to this model, the probability is about 33.3%. The same calculation for someone in the 90th percentile gives a probability of 54.9%:
+newdata <- data.frame(bmi=quantile(pima$bmi, .90))
+predict(m.red, type="response", newdata=newdata)
+
+```
+
+```{r}
+SoftDrink<-read.table(file="SoftDrink.txt",header=TRUE)
+head(SoftDrink)
+SoftDrink$Choice<-as.factor(SoftDrink$Choice)
+Fit<-glm(Choice~.-Brand,data=SoftDrink,family=binomial(link="logit"))
+summary(Fit)
+Fit<-glm(Choice~.-Brand-Price-Fat-Age-Vitamin,data=SoftDrink,family=binomial(link="logit"))
+summary(Fit)
+coef(Fit)
+#卡路里提高一单位,可以让对数发生比平均减少0.017单位
+exp(coef(Fit))
+#卡路里提高一单位,可以让发生比(优势比或购买意向)变成原来的0.9830543
+```
+
+#Cluster analysis       
+##Hierarchical Clustering       
+系统聚类 层次聚类,点之间用欧式距离               
+![](C:\Users\44180\Documents\R-in-SOE\R\R-class\c12\1.png)    
+###Interpreting a Dendrogram    
+![](C:\Users\44180\Documents\R-in-SOE\R\R-class\c12\2.png)    
+![](C:\Users\44180\Documents\R-in-SOE\R\R-class\c12\3.png)    
+###Linkage (distance) between Cluster Pairs                   
+类间距离
+
+###example
+```{r}
+# 1
+#Calculate
+x<-c(1,2,6,8,11); dim(x)<-c(5,1)
+d<-dist(x)
+hc1<-hclust(d, "single"); hc2<-hclust(d, "complete")
+hc3<-hclust(d, "median"); hc4<-hclust(d, "mcquitty")
+#Plot
+opar <- par(mfrow = c(2, 2))
+plot(hc1,hang=-1); plot(hc2,hang=-1)
+plot(hc3,hang=-1); plot(hc4,hang=-1)
+par(opar)
+
+# 2 
+PoData<-read.table(file="PollutionData1.txt",header=TRUE)
+CluData<-PoData[,2:7]
+head(CluData)
+###Hierarchical Clustering层次聚类
+DisMatrix<-dist(CluData,method = "euclidean")#欧式距离
+CluR<-hclust(d=DisMatrix,method="ward.D")
+#Graph_1
+plot(CluR,labels=PoData[,1])
+box()#图加框
+#Graph_2 分类的数目与类内点距离之间的关系,类越多,类越多,距离越小.应该在3类左右stop,距离代价较小
+plot(CluR$height,30:1,type="b",cex=0.7,xlab="Distance",ylab="Number of Cluster",main="Scree Plot")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
