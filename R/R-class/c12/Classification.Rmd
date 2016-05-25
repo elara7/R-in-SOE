@@ -77,6 +77,7 @@ exp(coef(Fit))
 
 分类的类数不同          
 ![](C:\Users\44180\Documents\R-in-SOE\R\R-class\c12\3.png)    
+
 ###Linkage (distance) between Cluster Pairs                   
 类间距离
 1. Nearest neighbor (single linkage).最小距离法         
@@ -133,5 +134,111 @@ box()#图加框
 #Graph_2 类内距离与剩余类数的关系.例如类内距离200左右,归为3类,差值代表再多合并一次(减少一类)所要增加的类内距离.
 plot(CluR$height,30:1,type="b",cex=0.7,xlab="Distance",ylab="Number of Cluster",main="Scree Plot")
 
-
+# 3
+# 画type-elements图
+PoData$memb<-cutree(CluR,k=4)
+View(PoData)
+table(PoData$memb)
+plot(PoData$memb,pch=PoData$memb,ylab="Type",xlab="province",main="4 clusters",axes=FALSE)
+par(las=2)
+axis(1,at=1:31,labels=PoData$province,cex.axis=0.6)
+axis(2,at=1:4,labels=1:4,cex.axis=0.6)
+box()
 ```
+
+## K-means Clustering           
+要先分配类别个数K       
+
+### 选定类中心  
+1. 经验选择法            
+2. 最大最小法:选择观测点中距离最远的两个点作为类中心        
+
+### 聚类                
+1. 计算每个观测点到类中心的距离         
+2. 距离哪个类中心近,就归类到那一类           
+3. 重新根据分类好的类别,分别计算各自的类中心        
+4. 按照新的类中心重复1,2,3步    
+5. 直到第N次类中心和N-1次类中心距离几乎为0,说明完成收敛            
+
+### example1    
+```{r}
+# 生成2列100对正态分布数据N(0,0.09)和N(1,0.09),分成2组,每组50对
+x <- rbind(matrix(rnorm(100, sd = 0.3), ncol = 2),
+matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))
+# K均值聚类(2类)
+cl <- kmeans(x, 2)
+cl
+# 分色标点
+plot(x, col = cl$cluster, pch=3, lwd=1)
+# 标识类中心
+points(cl$centers, col = 1:2, pch = 7, lwd=3)
+#连接类中心和各个点
+segments( x[cl$cluster==1,][,1], x[cl$cluster==1,][,2],cl$centers[1,1], cl$centers[1,2])
+segments( x[cl$cluster==2,][,1], x[cl$cluster==2,][,2],cl$centers[2,1], cl$centers[2,2],
+col=2)
+```
+
+### example2    
+```{r}
+# 鸢尾花数据
+newiris <- iris
+head(newiris)
+# 去掉种类数据
+newiris$Species <- NULL
+# 3类K均值聚类
+kc <- kmeans(newiris, 3)
+names(kc)
+#显示结果
+kc$cluster
+#行名是真实类,列名是k均值分类,每个数字表示行的真实类被分到第k类的数量
+table(iris$Species, kc$cluster)
+#重复聚类结果不同
+kc <- kmeans(newiris, 3)
+table(iris$Species, kc$cluster)
+```
+
+# example3
+```{r}
+#污染数据k均值聚类
+PoData<-read.table(file="C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c12\\data\\PollutionData1.txt",header=TRUE)
+CluData<-PoData[,2:7]
+set.seed(12345)
+CluR<-kmeans(x=CluData,centers=4,nstart=4,iter.max=10)
+CluR$size
+CluR$centers
+#绘图
+# opar<-par(no.readonly = TRUE)
+# par(mfrow=c(2,1))
+#Graph_1 type-elements graph
+PoData$CluR<-CluR$cluster
+plot(PoData$CluR,pch=PoData$CluR,ylab="Type",xlab="province",main="4 clusters",axes=FALSE)
+par(las=2)
+axis(1,at=1:31,labels=PoData$province,cex.axis=0.6)
+axis(2,at=1:4,labels=1:4,cex.axis=0.6)
+box()
+legend("topright",c("Type1","Type2","Type3","Type4"),pch=1:4,cex=0.6)
+
+#Graph_2 每类在各种排放物的排放量上的特点
+plot(CluR$centers[1,],type="l",ylim=c(0,82),xlab="Variables",ylab="Average of cluster (K centroid)",main="line chart",axes=FALSE)
+axis(1,at=1:6,labels=c("sanitary sewage","SO2","Smoke","Industrial solid waste",
+"industrial waste gas","industrial waste water"),cex.axis=0.6)
+box()
+lines(1:6,CluR$centers[2,],lty=2,col=2)
+lines(1:6,CluR$centers[3,],lty=3,col=3)
+lines(1:6,CluR$centers[4,],lty=4,col=4)
+legend("topleft",c("Type1","Type2","Type3","Type4"),lty=1:4,col=1:4,cex=0.6)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

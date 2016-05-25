@@ -1,0 +1,101 @@
+---
+title: "Tree-Based Methods"
+author: "Elara"
+date: "2016年5月25日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Cross-Validation              
+## The Validation Set Approach          
+数据分成2组,一组做training set,另一组做validation set or hold-out set.用training set拟合模型,用模型预测validation set的数据,计算validation set中的真实数据与预测值的MSE.   
+
+![](C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c13\\1.PNG)
+
+左图:只进行一次分组(随机),平方项的加入显著减低的MSE,三次方反而提高了MSE,效果不好            
+右图:每条线代表一次分组(随机),不同分组结果会导致结果的显著不同,并且由于分组要减半拟合模型所用的数据,也会导致模型拟合效果不好
+
+## K-Fold Cross-Validation      
+1. 把原始数据随机分成k部分,取出一部分作为validation set,剩下的k-1个部分作为training set,并求得其MSE         
+2. 取出第二部分作为validation set,剩下的作为training set,并求得其MSE         
+3. 重复k次,计算出k个MSE,取平均得到CV值              
+
+## example-只分一次
+```{r}
+library(ISLR)
+attach(Auto)
+#E1
+set.seed(2)
+#随机取出training set
+train=sample(392,196)
+lm.fit=lm(mpg~horsepower,subset=train)
+# 1阶模型MSE
+mean((mpg-predict(lm.fit,Auto))[-train]^2)
+# poly表示多项式,后面写入变量名和最高阶数
+lm.fit2=lm(mpg~poly(horsepower,2,raw=T),data=Auto,subset=train)
+# 2阶模型MSE
+mean((mpg-predict(lm.fit2,Auto))[-train]^2)
+# 3阶模型
+lm.fit3=lm(mpg~poly(horsepower,3,raw=T),data=Auto,subset=train)
+# 3阶模型MSE
+mean((mpg-predict(lm.fit3,Auto))[-train]^2)
+# 2阶结果最小
+#E2(只改变seed为1)
+set.seed(1)
+train=sample(392,196)
+lm.fit=lm(mpg~horsepower,subset=train)
+mean((mpg-predict(lm.fit,Auto))[-train]^2)
+lm.fit2=lm(mpg~poly(horsepower,2,raw=T),data=Auto,subset=train)
+mean((mpg-predict(lm.fit2,Auto))[-train]^2)
+lm.fit3=lm(mpg~poly(horsepower,3,raw=T),data=Auto,subset=train)
+mean((mpg-predict(lm.fit3,Auto))[-train]^2)
+# 3阶结果最小
+detach(Auto)
+```
+
+##example-k-flod
+```{r}
+library(boot)
+set.seed(17)
+cv.error.10=rep(0,10)
+for (i in 1:10){
+        #加入i次方多项式进行拟合
+glm.fit=glm(mpg~poly(horsepower,i),data=Auto)
+#计算加入i次方的MSE均值,分10个flod(k=10)
+cv.error.10[i]=cv.glm(Auto,glm.fit,K=10)$delta[1]
+}
+cv.error.10
+# 取2次方,后面阶数太高不划算
+```
+
+#  The Basics of Decision Trees         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
