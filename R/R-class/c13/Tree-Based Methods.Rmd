@@ -72,8 +72,56 @@ cv.error.10
 ```
 
 #  The Basics of Decision Trees         
+把预测空间(prediction space)用一些简单范围表示          
+## 回归树 regression trees              
+![](C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c13\\2.PNG)     
 
+总均值536,年份小于4.5的均值226,大于4.5的分两类,hits小与118的均值465,大于等于118的949   
+Years is the most important
+factor in determining Salary, and players with less experience earn lower salaries than more experienced
+players. Given that a player is less experienced, the number of hits that he made in the previous year
+seems to play little role in his salary. But among players who have been in the major leagues for
+five or more years, the number of hits made in the previous year does affect salary, and players who
+made more hits last year tend to have higher salaries. The regression tree shown in Figure is likely an
+over-simplification of the true relationship between Hits, Years, and Salary. However, it has advantages
+over other types of regression models: it is easier to interpret, and has a nice graphical representation.
 
+### 回归树求法  
+1. 将需要分类的预测空间分成J个(R1,R2,...RJ).如不同人的工资放到years和hits平面空间中,把这个平面分成3块          
+2. 对每一个落入Rj中的样本,用Rj的均值作为其预测值                
+3. 使得$RSS= \sum _{j=1}^{J} \sum _{i\in Rj} (y_i - \hat {y}_{Rj})^2$最小,其中$\hat {y}_{Rj}$是Rj中样本指标的均值.然而考虑所有可能的划分的话infeasible              
+4. 对于这种递归二元分割(recursive binary splitting),采用top-down,greedy算法.从树的顶端(只有一个类,所有样本都在一个区域内)开始考虑,然后连续地对区域分割,每次分割都分成2部分.每一步都只考虑该步最优,而不进行全局考虑.最优的标准是:对每一个自变量X,和他们各自的可能取值,找出一个自变量以及一个取值(cutpoint),使得根据这个变量的这个值划分开的2个区域能计算出最小的RSS.即对
+$$R1(j,s)= \{ X|X_{j}<s \} \\
+R2(j,s)=\{X|X_{j} \ge s\}
+$$               
+找出j和s最小化          
+$$\sum _{i:x_{i} \in R1(j,s)} (y_i-\hat {y}_{R1})^2 +\sum _{i:x_{i} \in R2(j,s)} (y_i-\hat {y}_{R2})^2$$               
+重复每一个新分出来的区域进行分割,直到达到一个停止标准.
+
+![](C:\\Users\\44180\\Documents\\R-in-SOE\\R\\R-class\\c13\\2.PNG)     
+
+左上角的图无法通过recursive binary splitting得到.剩下3图是同一棵树的结果               
+### 剪枝(tree pruning)          
+无节制地生长回归树会导致过度拟合(overfit).因为树变得过于庞大复杂.小的树可能产生较低的方差和更好的解释性,虽然可能会有一些bias作为代价.可能的剪枝标准可以是RSS的减少超过一定的大小.但是这可能会导致错过之后的产生很大的RSS下降的树枝.   
+更好的剪枝方法是:先生长成完整的树$T_0$,再从中寻找CV最小的树--然而子集可能太多,难以计算.               
+
+### cost complexity pruning(weakest link pruning)       
+
+对一棵树T而言           
+T:terminal nodes of the tree T,$R_m$第m个terminal node,$\hat{y} _{R_m}$是$R_m$对应区域中的样本均值              
+在原有的RSS中加入一个对于树的复杂度的惩罚项,对每一个惩罚参数$\alpha$,找出T,使整个目标函数最小化             
+$$
+\sum _{m=1}^{|T|} \sum _{i:x_i \in R_m } (y_i-\hat {y}_{R_m})^2 + \alpha |T|
+$$
+                
+### 流程        
+1. Use recursive binary splitting to grow a large tree on the training data, stopping only when each terminal node has fewer than some minimum number of observations.           
+2. Apply cost complexity pruning to the large tree in order to obtain a sequence of best subtrees,as a function of $\alpha$.                    
+3. Use K-fold cross-validation to choose α. For each k = 1, ..., K:             
+(a) Repeat Steps 1 and 2 on the $\frac{K−1}{K}$ th fraction of the training data, excluding the kth fold.                   
+(b) Evaluate the mean squared prediction error on the data in the left-out k-th fold, as a function of $\alpha$.                        
+(c) Average the results, and pick α to minimize the average error.      
+4. Return the subtree from Step 2 that corresponds to the chosen value of $\alpha$.               
 
 
 
